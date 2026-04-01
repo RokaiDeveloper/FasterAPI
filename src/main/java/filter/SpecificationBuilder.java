@@ -8,10 +8,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Construtor de especificacoes JPA para filtragem dinamica de dados.
+ * Esta classe cria filtros automaticamente baseados nos parametros
+ * da requisicao HTTP, permitindo buscas flexiveis.
+ * 
+ * @author FasterAPI Framework
+ * @since 1.0.0
+ */
 public class SpecificationBuilder {
 
+    /** Parametros reservados que nao devem ser usados como filtros */
     private static final Set<String> PARAMS_RESERVADOS = Set.of("page", "size", "sort");
 
+    /**
+     * Constroi uma especificacao JPA a partir dos parametros da requisicao.
+     * Cria filtros do tipo LIKE para cada parametro que corresponde a um campo
+     * da entidade. Os filtros sao case-insensitive.
+     * 
+     * @param <T> tipo da entidade
+     * @param params mapa com parametros da requisicao
+     * @return especificacao JPA para filtragem
+     */
     public static <T> Specification<T> construir(Map<String, String> params) {
         return (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -31,6 +49,7 @@ public class SpecificationBuilder {
                             )
                     );
                 } catch (IllegalArgumentException e) {
+                    // Campo nao existe na entidade, ignora
                 }
             });
 

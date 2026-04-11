@@ -52,17 +52,10 @@ fasterapi.base-package=com.seuprojeto.models
 **Logs em DEBUG**: Para ver detalhes dos mapeamentos individuais, habilite o nível DEBUG no `application.properties`:
 
 ```properties
-logging.level.core.FasterCrudInitializer=DEBUG
+logging.level.fasterapi.core.FasterCrudInitializer=DEBUG
 ```
 
-Com isso você verá logs adicionais como:
-```
-[DEBUG] >>> Mapeamento registrado: GET /clientes -> findAll
-[DEBUG] >>> Mapeamento registrado: GET /clientes/{id} -> findById
-[DEBUG] >>> Mapeamento registrado: POST /clientes -> create
-[DEBUG] >>> Mapeamento registrado: PUT /clientes/{id} -> update
-[DEBUG] >>> Mapeamento registrado: DELETE /clientes/{id} -> delete
-```
+Com isso você verá logs adicionais mostrando o registro de cada método endpoint.
 
 ## Uso
 

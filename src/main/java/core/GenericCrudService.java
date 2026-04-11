@@ -2,7 +2,6 @@ package core;
 
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.lang.reflect.Field;
@@ -68,7 +67,6 @@ public class GenericCrudService<T> {
             try {
                 Field field = entityClass.getDeclaredField(fieldName);
                 field.setAccessible(true);
-                // Aqui pode ser necessário converter tipos (ex.: String para Enum, Long, etc.)
                 field.set(entity, value);
             } catch (NoSuchFieldException e) {
                 // Ignora campos que não existem na entidade

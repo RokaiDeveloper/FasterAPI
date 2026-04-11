@@ -10,7 +10,7 @@ import java.util.Map;
 public class GenericCrudController<T> {
 
     private final GenericCrudService<T> service;
-    private final String basePath; // Ex: "/produtos"
+    private final String basePath;
 
     public GenericCrudController(GenericCrudService<T> service, String basePath) {
         this.service = service;

@@ -2,6 +2,8 @@ package core;
 
 import annotation.FasterCRUD;
 import jakarta.persistence.EntityManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -26,6 +28,8 @@ import java.util.Set;
 @Component
 public class FasterCrudInitializer implements ApplicationRunner {
 
+    private static final Logger logger = LoggerFactory.getLogger(FasterCrudInitializer.class);
+
     @Value("${fasterapi.base-package:com.exemplo.entidades}")
     private String basePackage;
 
@@ -43,10 +47,10 @@ public class FasterCrudInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        System.out.println(">>> Escaneando pacote: " + basePackage);
+        logger.info(">>> Escaneando pacote: {}", basePackage);
         Set<Class<?>> entities = scanEntities(basePackage);
-        System.out.println(">>> Entidades encontradas: " + entities.size());
-        entities.forEach(e -> System.out.println("   - " + e.getName()));
+        logger.info(">>> Entidades encontradas: {}", entities.size());
+        entities.forEach(e -> logger.info("   - {}", e.getName()));
 
         for (Class<?> entityClass : entities) {
             registerCrudForEntity(entityClass);
@@ -80,6 +84,8 @@ public class FasterCrudInitializer implements ApplicationRunner {
 
         // Registra os mapeamentos
         registerControllerMappings(controller, path);
+        
+        logger.info(">>> CRUD registrado para entidade: {} com path: {}", entityClass.getSimpleName(), path);
     }
 
     private void registerControllerMappings(Object controller, String basePath) {
@@ -110,6 +116,7 @@ public class FasterCrudInitializer implements ApplicationRunner {
                         .methods(httpMethod)
                         .build();
                 handlerMapping.registerMapping(mappingInfo, controller, method);
+                logger.debug(">>> Mapeamento registrado: {} {} -> {}", httpMethod, fullPath, method.getName());
             }
         }
     }

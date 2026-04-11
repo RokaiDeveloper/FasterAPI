@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
@@ -36,6 +37,9 @@ public class FasterCrudInitializer implements ApplicationRunner {
 
     @Autowired
     private PlatformTransactionManager transactionManager;
+
+    @Autowired
+    private ConfigurableApplicationContext applicationContext;
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
@@ -70,6 +74,9 @@ public class FasterCrudInitializer implements ApplicationRunner {
         GenericCrudService<T> service = new GenericCrudService<>(repository, entityClass, transactionManager);
         // Controller
         GenericCrudController<T> controller = new GenericCrudController<>(service, path);
+
+        String beanName = entityClass.getSimpleName().toLowerCase() + "Controller";
+        applicationContext.getBeanFactory().registerSingleton(beanName, controller);
 
         // Registra os mapeamentos
         registerControllerMappings(controller, path);

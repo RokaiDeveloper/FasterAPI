@@ -2,6 +2,7 @@ package core;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public class GenericCrudController<T> {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<T> findById(@PathVariable Long id) {
+    public ResponseEntity<T> findById(@PathVariable("id") Long id) {
         return service.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -36,13 +37,13 @@ public class GenericCrudController<T> {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<T> update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<T> update(@PathVariable("id") Long id, @RequestBody Map<String, Object> body) {
         T updated = service.update(id, body);
         return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }

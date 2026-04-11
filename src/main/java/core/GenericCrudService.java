@@ -1,96 +1,79 @@
 package core;
 
-import jakarta.persistence.EntityManager;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.support.JpaEntityInformationSupport;
-import org.springframework.data.jpa.repository.support.JpaRepositoryFactory;
+import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import filter.SpecificationBuilder;
+public class GenericCrudService<T> {
 
-public class GenericCrudService {
+    private final SimpleJpaRepository<T, Long> repository;
+    private final Class<T> entityClass;
+    private final TransactionTemplate transactionTemplate;
 
-    private final Class<?> entidade;
-    private final SpecificationExecutorRepository<Object> repository;
-    private final EntityManager entityManager;
-
-    public GenericCrudService(Class<?> entidade, EntityManager entityManager) {
-        this.entidade = entidade;
-        this.entityManager = entityManager;
-
-        JpaRepositoryFactory factory = new JpaRepositoryFactory(entityManager);
-        this.repository = (SpecificationExecutorRepository<Object>) factory.getRepository(
-                SpecificationExecutorRepository.class,
-                JpaEntityInformationSupport.getEntityInformation(entidade, entityManager)
-        );
+    public GenericCrudService(SimpleJpaRepository<T, Long> repository,
+                              Class<T> entityClass,
+                              PlatformTransactionManager transactionManager) {
+        this.repository = repository;
+        this.entityClass = entityClass;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
-    public Page<?> findAll(Map<String, String> params) {
-        int page = Integer.parseInt(params.getOrDefault("page", "0"));
-        int size = Integer.parseInt(params.getOrDefault("size", "20"));
-        String sortField = params.getOrDefault("sort", "id");
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortField));
-        var specification = SpecificationBuilder.construir(params);
-
-        return repository.findAll(specification, pageable)
-                .map(DtoMapper::converter);
+    public List<T> findAll() {
+        return repository.findAll();
     }
 
-    public Optional<?> findById(Long id) {
-        return repository.findById(id)
-                .map(DtoMapper::converter);
+    public Optional<T> findById(Long id) {
+        return repository.findById(id);
     }
 
-    @Transactional
-    public Object create(Map<String, Object> body) {
-        Object instancia = novaInstancia();
-        preencherCampos(instancia, body);
-        Object salvo = repository.save(instancia);
-        return DtoMapper.converter(salvo);
+    public T create(Map<String, Object> fields) {
+        return transactionTemplate.execute(status -> {
+            T entity = newInstance();
+            populateFields(entity, fields);
+            return repository.save(entity);
+        });
     }
 
-    @Transactional
-    public Object update(Long id, Map<String, Object> body) {
-        Object instancia = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Não encontrado: " + id));
-        preencherCampos(instancia, body);
-        Object salvo = repository.save(instancia);
-        return DtoMapper.converter(salvo);
+    public T update(Long id, Map<String, Object> fields) {
+        return transactionTemplate.execute(status -> {
+            T existing = repository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Entidade não encontrada com id: " + id));
+            populateFields(existing, fields);
+            return repository.save(existing);
+        });
     }
 
-    @Transactional
     public void delete(Long id) {
-        repository.deleteById(id);
+        transactionTemplate.executeWithoutResult(status -> {
+            repository.deleteById(id);
+        });
     }
 
-    private Object novaInstancia() {
+    private T newInstance() {
         try {
-            return entidade.getDeclaredConstructor().newInstance();
+            return entityClass.getDeclaredConstructor().newInstance();
         } catch (Exception e) {
-            throw new RuntimeException("Não foi possível instanciar: " + entidade.getSimpleName(), e);
+            throw new RuntimeException("Erro ao instanciar " + entityClass.getSimpleName(), e);
         }
     }
 
-    private void preencherCampos(Object instancia, Map<String, Object> body) {
-        body.forEach((nomeCampo, valor) -> {
+    private void populateFields(T entity, Map<String, Object> fields) {
+        fields.forEach((fieldName, value) -> {
             try {
-                Field campo = entidade.getDeclaredField(nomeCampo);
-                campo.setAccessible(true);
-                campo.set(instancia, valor);
+                Field field = entityClass.getDeclaredField(fieldName);
+                field.setAccessible(true);
+                // Aqui pode ser necessário converter tipos (ex.: String para Enum, Long, etc.)
+                field.set(entity, value);
             } catch (NoSuchFieldException e) {
-
+                // Ignora campos que não existem na entidade
             } catch (IllegalAccessException e) {
-                throw new RuntimeException("Erro ao preencher campo: " + nomeCampo, e);
+                throw new RuntimeException("Erro ao definir campo " + fieldName, e);
             }
         });
     }

@@ -64,19 +64,15 @@ public class FasterCrudInitializer implements ApplicationRunner {
                 ? "/" + entityClass.getSimpleName().toLowerCase()
                 : config.path();
 
-        // Garante que o path comece com "/"
         if (!path.startsWith("/")) {
             path = "/" + path;
         }
 
-        // Repositório
         JpaEntityInformation<T, ?> info =
                 (JpaEntityInformation<T, ?>) JpaEntityInformationSupport.getEntityInformation(entityClass, entityManager);
         SimpleJpaRepository<T, Long> repository = new SimpleJpaRepository<>(info, entityManager);
 
-        // Serviço (agora passando a classe da entidade)
         GenericCrudService<T> service = new GenericCrudService<>(repository, entityClass, transactionManager);
-        // Controller
         GenericCrudController<T> controller = new GenericCrudController<>(service, path);
 
         String beanName = entityClass.getSimpleName().toLowerCase() + "Controller";

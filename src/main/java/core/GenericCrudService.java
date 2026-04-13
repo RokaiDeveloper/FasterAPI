@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@Service
 public class GenericCrudService<T> {
 
     private final SimpleJpaRepository<T, Long> repository;

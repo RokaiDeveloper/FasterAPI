@@ -2,6 +2,7 @@ package core;
 
 import annotation.FasterCRUD;
 import jakarta.persistence.EntityManager;
+import jakarta.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,9 @@ public class FasterCrudInitializer implements ApplicationRunner {
     @Autowired
     private ConfigurableApplicationContext applicationContext;
 
+    @Autowired
+    private Validator validator;
+
     @Override
     public void run(ApplicationArguments args) throws Exception {
         logger.info(">>> Escaneando pacote: {}", basePackage);
@@ -72,7 +76,7 @@ public class FasterCrudInitializer implements ApplicationRunner {
                 (JpaEntityInformation<T, ?>) JpaEntityInformationSupport.getEntityInformation(entityClass, entityManager);
         SimpleJpaRepository<T, Long> repository = new SimpleJpaRepository<>(info, entityManager);
 
-        GenericCrudService<T> service = new GenericCrudService<>(repository, entityClass, transactionManager);
+        GenericCrudService<T> service = new GenericCrudService<>(repository, entityClass, transactionManager, validator, entityManager);
         GenericCrudController<T> controller = new GenericCrudController<>(service, path);
 
         String beanName = entityClass.getSimpleName().toLowerCase() + "Controller";
@@ -103,6 +107,10 @@ public class FasterCrudInitializer implements ApplicationRunner {
                 DeleteMapping annotation = method.getAnnotation(DeleteMapping.class);
                 subPath = annotation.value().length > 0 ? annotation.value()[0] : "";
                 httpMethod = RequestMethod.DELETE;
+            } else if (method.isAnnotationPresent(PatchMapping.class)) {
+                PatchMapping annotation = method.getAnnotation(PatchMapping.class);
+                subPath = annotation.value().length > 0 ? annotation.value()[0] : "";
+                httpMethod = RequestMethod.PATCH;
             }
 
             if (httpMethod != null) {

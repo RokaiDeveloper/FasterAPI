@@ -67,6 +67,9 @@ jobs:
           branch="release/v$version"
           if git ls-remote --exit-code origin "refs/heads/$branch" >/dev/null 2>&1; then
             echo "Release branch $branch already exists; reusing it"
+            # versions:set changes pom.xml in the workspace; discard that
+            # temporary change before checking out the existing release branch.
+            git reset --hard HEAD
             git fetch origin "$branch"
             git checkout -B "$branch" "origin/$branch"
             branch_version="$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)"

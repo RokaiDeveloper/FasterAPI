@@ -6,29 +6,26 @@ FasterCRUD é um framework minimalista para Spring Boot que gera automaticamente
 
 ## Instalação
 
-### Opção 1: Como biblioteca Maven (Recomendado)
+### Maven Central
 
-1. Compile o projeto e instale no seu repositório local Maven:
-
-```bash
-mvn clean install
-```
-
-2. Adicione a dependência no `pom.xml` do seu projeto:
+Adicione a versão publicada no Maven Central ao `pom.xml` do seu projeto:
 
 ```xml
 <dependency>
-    <groupId>com.rokaidev</groupId>
+    <groupId>io.github.rokaideveloper</groupId>
     <artifactId>fasterapi-spring-boot-starter</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
-O starter é carregado automaticamente pelo Spring Boot. Não é necessário
-copiar classes do framework nem declarar `@ComponentScan` para os pacotes
-internos.
+Artefato publicado: [io.github.rokaideveloper:fasterapi-spring-boot-starter no
+Maven Central](https://central.sonatype.com/artifact/io.github.rokaideveloper/fasterapi-spring-boot-starter).
 
-3. No arquivo `application.properties`, defina o pacote onde estão suas entidades:
+Não é necessário instalar o projeto manualmente com `mvn install`, copiar
+classes do framework ou declarar `@ComponentScan` para os pacotes internos. O
+starter é carregado automaticamente pelo Spring Boot.
+
+No arquivo `application.properties`, defina o pacote onde estão suas entidades:
 
 ```properties
 fasterapi.base-package=com.seuprojeto.models
@@ -52,27 +49,6 @@ Ao iniciar a aplicação, verifique os logs para confirmar que o framework foi i
 ```properties
 logging.level.com.rokaidev.fasterapi=DEBUG
 ```
-
-## Publicação Maven
-
-Para testar o artefato no repositório local:
-
-```bash
-./mvnw clean install
-```
-
-Para publicar no Maven Central, primeiro é necessário criar e verificar o
-namespace `com.rokaidev` no Sonatype Central Portal, configurar um token no
-`~/.m2/settings.xml` com o id `central` e configurar uma chave GPG local.
-Depois, use uma versão final (sem `SNAPSHOT`) e execute:
-
-```bash
-./mvnw clean deploy -Prelease -Dgpg.keyname=SEU_ID_GPG
-```
-
-O profile `release` gera os fontes, Javadoc e assinaturas. O plugin de
-publicação usa o servidor Maven com id `central`; nenhuma credencial deve ser
-armazenada no `pom.xml` ou no repositório.
 
 ## Uso
 
@@ -539,9 +515,22 @@ public class ProdutoDTO {
 - O OpenAPI usa os campos do DTO manual para gerar os schemas e filtros, sem
   documentar campos adicionais existentes somente na entidade
 
-## Dependências
+## Dependências e compatibilidade Java
 
-O starter é destinado a aplicações Spring Boot 3.x com Java 21 ou superior e
+O artefato `1.0.1` é compilado com `--release 17`. Portanto, a aplicação
+consumidora precisa executar em Java 17 ou superior. O Spring Boot 3.2 também
+exige Java 17 ou superior.
+
+Em termos práticos:
+
+| Runtime da aplicação | FasterAPI 1.0.1 |
+|----------------------|-----------------|
+| Java 17               | Suportado       |
+| Java 18, 19 ou 20     | Suportado       |
+| Java 21               | Suportado       |
+| Java 22+              | Suportado, desde que compatível com o Spring Boot usado |
+
+O starter é destinado a aplicações Spring Boot 3.x com Java 17 ou superior e
 integra Spring MVC Servlet, Spring Data JPA, Jakarta Persistence, Jakarta Bean
 Validation e Jackson.
 

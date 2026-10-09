@@ -6,7 +6,7 @@
 
     <groupId>io.github.rokaideveloper</groupId>
     <artifactId>fasterapi-spring-boot-starter</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <packaging>jar</packaging>
 
     <name>FasterAPI Spring Boot Starter</name>
@@ -33,7 +33,7 @@
     </scm>
 
     <properties>
-        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-boot.version>3.2.5</spring-boot.version>
     </properties>

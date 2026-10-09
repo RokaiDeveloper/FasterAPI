@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability privately
+    url: https://github.com/RokaiDeveloper/FasterAPI/security/advisories/new
+    about: Do not disclose vulnerabilities in public issues. Use a private Security Advisory.
+  - name: Ask in GitHub Discussions
+    url: https://github.com/RokaiDeveloper/FasterAPI/discussions
+    about: Use Discussions for usage support, ideas, and design conversations.

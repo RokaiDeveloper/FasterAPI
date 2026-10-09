@@ -23,7 +23,7 @@ public class CrudDisabledOperationHandler {
         if (isCrudPath(request)) {
             return ResponseEntity.notFound().build();
         }
-            return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).build();
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).build();
     }
 
     private boolean isCrudPath(HttpServletRequest request) {

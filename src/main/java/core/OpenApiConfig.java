@@ -6,8 +6,11 @@ import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.media.ArraySchema;
+import io.swagger.v3.oas.models.media.BooleanSchema;
 import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.DateTimeSchema;
 import io.swagger.v3.oas.models.media.IntegerSchema;
+import io.swagger.v3.oas.models.media.NumberSchema;
 import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
@@ -21,7 +24,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import annotation.ReadOnly;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.time.temporal.Temporal;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -53,43 +59,44 @@ public class OpenApiConfig {
                 PathItem itemPath = openAPI.getPaths()
                         .computeIfAbsent(registration.path() + "/{id}", ignored -> new PathItem());
                 String tag = registration.apiClass().getSimpleName();
-                Schema<?> schema = schemaFor(registration);
-                String schemaName = tag + "Response";
-                openAPI.getComponents().addSchemas(schemaName, schema);
+                String responseSchemaName = tag + "Response";
+                String requestSchemaName = tag + "Request";
+                openAPI.getComponents().addSchemas(responseSchemaName, schemaFor(registration, false));
+                openAPI.getComponents().addSchemas(requestSchemaName, schemaFor(registration, true));
 
                 if (registration.supports(CrudOperation.GET_LIST)) {
                     Operation operation = operation("Listar " + tag, tag);
                     operation.addParametersItem(queryParameter("page", "Página, iniciando em 0", new IntegerSchema()));
                     operation.addParametersItem(queryParameter("size", "Quantidade de registros por página", new IntegerSchema()));
                     operation.addParametersItem(queryParameter("sort", "Ordenação no formato campo,direção", new StringSchema()));
-                    operation.setResponses(responses("200", new ArraySchema().items(ref(schemaName))));
+                    operation.setResponses(responses("200", new ArraySchema().items(ref(responseSchemaName))));
                     addFilterParameters(operation, registration);
                     collectionPath.setGet(operation);
                 }
                 if (registration.supports(CrudOperation.GET_ONE)) {
                     Operation operation = operation("Buscar " + tag + " por ID", tag);
                     operation.addParametersItem(idParameter());
-                    operation.setResponses(responses("200", ref(schemaName), "404", null));
+                    operation.setResponses(responses("200", ref(responseSchemaName), "404", null));
                     itemPath.setGet(operation);
                 }
                 if (registration.supports(CrudOperation.POST)) {
                     Operation operation = operation("Criar " + tag, tag);
-                    operation.setRequestBody(requestBody(schemaName));
-                    operation.setResponses(responses("201", ref(schemaName), "400", null));
+                    operation.setRequestBody(requestBody(requestSchemaName));
+                    operation.setResponses(responses("201", ref(responseSchemaName), "400", null));
                     collectionPath.setPost(operation);
                 }
                 if (registration.supports(CrudOperation.PUT)) {
                     Operation operation = operation("Atualizar " + tag, tag);
                     operation.addParametersItem(idParameter());
-                    operation.setRequestBody(requestBody(schemaName));
-                    operation.setResponses(responses("200", ref(schemaName), "400", null, "404", null));
+                    operation.setRequestBody(requestBody(requestSchemaName));
+                    operation.setResponses(responses("200", ref(responseSchemaName), "400", null, "404", null));
                     itemPath.setPut(operation);
                 }
                 if (registration.supports(CrudOperation.PATCH)) {
                     Operation operation = operation("Atualizar parcialmente " + tag, tag);
                     operation.addParametersItem(idParameter());
-                    operation.setRequestBody(requestBody(schemaName));
-                    operation.setResponses(responses("200", ref(schemaName), "400", null, "404", null));
+                    operation.setRequestBody(requestBody(requestSchemaName));
+                    operation.setResponses(responses("200", ref(responseSchemaName), "400", null, "404", null));
                     itemPath.setPatch(operation);
                 }
                 if (registration.supports(CrudOperation.DELETE)) {
@@ -129,12 +136,12 @@ public class OpenApiConfig {
     }
 
     private void addFilterParameters(Operation operation, CrudRegistration registration) {
-        for (Field field : allFields(registration.entityClass()).values()) {
+        for (Field field : exposedFields(registration).values()) {
             if (field.isSynthetic() || field.isAnnotationPresent(JsonIgnore.class)
                     || field.getName().equals("id")) {
                 continue;
             }
-            Schema<?> schema = new Schema<>().type(typeName(field.getType()));
+            Schema<?> schema = schemaForType(field.getType());
             operation.addParametersItem(queryParameter(field.getName(), "Filtro por igualdade", schema));
             operation.addParametersItem(queryParameter(field.getName() + "__like", "Filtro LIKE", new StringSchema()));
             operation.addParametersItem(queryParameter(field.getName() + "__eq", "Filtro de igualdade", schema));
@@ -182,27 +189,52 @@ public class OpenApiConfig {
         return new Schema<>().$ref("#/components/schemas/" + schemaName);
     }
 
-    private Schema<?> schemaFor(CrudRegistration registration) {
+    private Schema<?> schemaFor(CrudRegistration registration, boolean request) {
         Class<?> type = registration.dto() ? registration.apiClass() : registration.entityClass();
         ObjectSchema schema = new ObjectSchema();
         Map<String, Schema> properties = new LinkedHashMap<>();
         for (Field field : allFields(type).values()) {
-            if (field.isSynthetic() || field.isAnnotationPresent(JsonIgnore.class)) {
+            if (field.isSynthetic()
+                    || field.isAnnotationPresent(JsonIgnore.class)
+                    || request && (field.getName().equals("id") || field.isAnnotationPresent(ReadOnly.class))) {
                 continue;
             }
-            properties.put(field.getName(), new Schema<>().type(typeName(field.getType())));
+            properties.put(field.getName(), schemaForType(field.getType()));
         }
         schema.setProperties(properties);
         return schema;
     }
 
-    private String typeName(Class<?> type) {
-        if (type == String.class || type.isEnum()) return "string";
-        if (type == boolean.class || type == Boolean.class) return "boolean";
+    private Map<String, Field> exposedFields(CrudRegistration registration) {
+        Class<?> type = registration.dto() ? registration.apiClass() : registration.entityClass();
+        return allFields(type);
+    }
+
+    private Schema<?> schemaForType(Class<?> type) {
+        if (type == String.class || type.isEnum() || type == Character.class || type == char.class) {
+            StringSchema schema = new StringSchema();
+            if (type.isEnum()) {
+                for (Object constant : type.getEnumConstants()) {
+                    schema.addEnumItemObject(constant.toString());
+                }
+            }
+            return schema;
+        }
+        if (type == boolean.class || type == Boolean.class) {
+            return new BooleanSchema();
+        }
         if (type == int.class || type == Integer.class || type == long.class || type == Long.class
-                || type == short.class || type == Short.class) return "integer";
-        if (Number.class.isAssignableFrom(type) || type == float.class || type == double.class) return "number";
-        return "object";
+                || type == short.class || type == Short.class) {
+            return new IntegerSchema().format(type == Long.class || type == long.class ? "int64" : "int32");
+        }
+        if (Number.class.isAssignableFrom(type) || type == float.class || type == double.class
+                || type == BigDecimal.class) {
+            return new NumberSchema();
+        }
+        if (Temporal.class.isAssignableFrom(type)) {
+            return new DateTimeSchema();
+        }
+        return new Schema<>().type("object");
     }
 
     private Map<String, Field> allFields(Class<?> type) {

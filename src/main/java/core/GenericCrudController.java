@@ -63,7 +63,7 @@ public class GenericCrudController<T> {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<T> findById(@PathVariable("id") Long id) {
+    public ResponseEntity<?> findById(@PathVariable("id") Long id) {
         return service.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -72,7 +72,7 @@ public class GenericCrudController<T> {
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Map<String, Object> body) {
         try {
-            T created = service.create(body);
+            Object created = service.create(body);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (ValidationException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -82,7 +82,7 @@ public class GenericCrudController<T> {
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable("id") Long id, @RequestBody Map<String, Object> body) {
         try {
-            T updated = service.update(id, body);
+            Object updated = service.update(id, body);
             return ResponseEntity.ok(updated);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
@@ -94,7 +94,7 @@ public class GenericCrudController<T> {
     @PatchMapping("/{id}")
     public ResponseEntity<?> patch(@PathVariable("id") Long id, @RequestBody Map<String, Object> body) {
         try {
-            T updated = service.patch(id, body);
+            Object updated = service.patch(id, body);
             return ResponseEntity.ok(updated);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());

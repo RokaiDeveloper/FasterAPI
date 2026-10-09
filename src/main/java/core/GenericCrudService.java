@@ -31,6 +31,9 @@ public class GenericCrudService<T> {
     private final ObjectMapper objectMapper;
     private final Validator validator;
     private final EntityManager entityManager;
+    private final DtoMapper dtoMapper;
+    private final Class<?> dtoClass;
+    private final boolean useDto;
 
     public GenericCrudService(SimpleJpaRepository<T, Long> repository,
                               Class<T> entityClass,
@@ -43,24 +46,69 @@ public class GenericCrudService<T> {
         this.objectMapper = new ObjectMapper();
         this.validator = validator;
         this.entityManager = entityManager;
+        this.dtoMapper = null;
+        this.dtoClass = null;
+        this.useDto = false;
     }
 
-    public List<T> findAll() {
-        return repository.findAll();
+    public GenericCrudService(SimpleJpaRepository<T, Long> repository,
+                              Class<T> entityClass,
+                              PlatformTransactionManager transactionManager,
+                              Validator validator,
+                              EntityManager entityManager,
+                              DtoMapper dtoMapper,
+                              Class<?> dtoClass) {
+        this.repository = repository;
+        this.entityClass = entityClass;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+        this.objectMapper = new ObjectMapper();
+        this.validator = validator;
+        this.entityManager = entityManager;
+        this.dtoMapper = dtoMapper;
+        this.dtoClass = dtoClass;
+        this.useDto = true;
     }
 
-    public org.springframework.data.domain.Page<T> findAll(org.springframework.data.domain.Pageable pageable) {
-        return repository.findAll(pageable);
+    @SuppressWarnings("unchecked")
+    public List<?> findAll() {
+        List<T> entities = repository.findAll();
+        if (useDto) {
+            return entities.stream()
+                    .map(e -> dtoMapper.toDto(e, (Class<Object>) dtoClass))
+                    .collect(java.util.stream.Collectors.toList());
+        }
+        return entities;
     }
 
-    public List<T> findAll(Map<String, String> filters) {
+    @SuppressWarnings("unchecked")
+    public org.springframework.data.domain.Page<?> findAll(org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<T> entityPage = repository.findAll(pageable);
+        if (useDto) {
+            return entityPage.map(e -> dtoMapper.toDto(e, (Class<Object>) dtoClass));
+        }
+        return entityPage;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<?> findAll(Map<String, String> filters) {
         Specification<T> spec = buildSpecification(filters);
-        return repository.findAll(spec);
+        List<T> entities = repository.findAll(spec);
+        if (useDto) {
+            return entities.stream()
+                    .map(e -> dtoMapper.toDto(e, (Class<Object>) dtoClass))
+                    .collect(java.util.stream.Collectors.toList());
+        }
+        return entities;
     }
 
-    public org.springframework.data.domain.Page<T> findAll(Map<String, String> filters, org.springframework.data.domain.Pageable pageable) {
+    @SuppressWarnings("unchecked")
+    public org.springframework.data.domain.Page<?> findAll(Map<String, String> filters, org.springframework.data.domain.Pageable pageable) {
         Specification<T> spec = buildSpecification(filters);
-        return repository.findAll(spec, pageable);
+        org.springframework.data.domain.Page<T> entityPage = repository.findAll(spec, pageable);
+        if (useDto) {
+            return entityPage.map(e -> dtoMapper.toDto(e, (Class<Object>) dtoClass));
+        }
+        return entityPage;
     }
 
     private Specification<T> buildSpecification(Map<String, String> filters) {
@@ -122,36 +170,80 @@ public class GenericCrudService<T> {
         return objectMapper.convertValue(value, targetType);
     }
 
-    public Optional<T> findById(Long id) {
-        return repository.findById(id);
+    @SuppressWarnings("unchecked")
+    public Optional<?> findById(Long id) {
+        Optional<T> entity = repository.findById(id);
+        if (useDto && entity.isPresent()) {
+            return Optional.of(dtoMapper.toDto(entity.get(), (Class<Object>) dtoClass));
+        }
+        return entity;
     }
 
-    public T create(Map<String, Object> fields) {
+    @SuppressWarnings("unchecked")
+    public Object create(Map<String, Object> fields) {
         return transactionTemplate.execute(status -> {
-            T entity = newInstance();
-            populateFields(entity, fields);
-            validate(entity);
-            return repository.save(entity);
+            if (useDto) {
+                // Criar DTO a partir dos campos
+                Object dto = newInstanceDto();
+                populateFields(dto, fields);
+                // Mapear DTO para entidade
+                T entity = (T) dtoMapper.toEntity(dto, entityClass);
+                validate(entity);
+                T savedEntity = repository.save(entity);
+                // Retornar DTO
+                return dtoMapper.toDto(savedEntity, (Class<Object>) dtoClass);
+            } else {
+                T entity = newInstance();
+                populateFields(entity, fields);
+                validate(entity);
+                return repository.save(entity);
+            }
         });
     }
 
-    public T update(Long id, Map<String, Object> fields) {
+    @SuppressWarnings("unchecked")
+    public Object update(Long id, Map<String, Object> fields) {
         return transactionTemplate.execute(status -> {
             T existing = repository.findById(id)
                     .orElseThrow(() -> new EntityNotFoundException("Entidade não encontrada com id: " + id));
-            populateFields(existing, fields);
-            validate(existing);
-            return repository.save(existing);
+            if (useDto) {
+                // Criar DTO a partir dos campos
+                Object dto = newInstanceDto();
+                populateFields(dto, fields);
+                // Atualizar entidade com DTO
+                dtoMapper.updateEntity(dto, existing);
+                validate(existing);
+                T savedEntity = repository.save(existing);
+                // Retornar DTO
+                return dtoMapper.toDto(savedEntity, (Class<Object>) dtoClass);
+            } else {
+                populateFields(existing, fields);
+                validate(existing);
+                return repository.save(existing);
+            }
         });
     }
 
-    public T patch(Long id, Map<String, Object> fields) {
+    @SuppressWarnings("unchecked")
+    public Object patch(Long id, Map<String, Object> fields) {
         return transactionTemplate.execute(status -> {
             T existing = repository.findById(id)
                     .orElseThrow(() -> new EntityNotFoundException("Entidade não encontrada com id: " + id));
-            populateFields(existing, fields);
-            validate(existing);
-            return repository.save(existing);
+            if (useDto) {
+                // Criar DTO a partir dos campos
+                Object dto = newInstanceDto();
+                populateFields(dto, fields);
+                // Atualizar entidade com DTO
+                dtoMapper.updateEntity(dto, existing);
+                validate(existing);
+                T savedEntity = repository.save(existing);
+                // Retornar DTO
+                return dtoMapper.toDto(savedEntity, (Class<Object>) dtoClass);
+            } else {
+                populateFields(existing, fields);
+                validate(existing);
+                return repository.save(existing);
+            }
         });
     }
 
@@ -179,22 +271,33 @@ public class GenericCrudService<T> {
         }
     }
 
-    private void populateFields(T entity, Map<String, Object> fields) {
+    @SuppressWarnings("unchecked")
+    private Object newInstanceDto() {
+        try {
+            return dtoClass.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao instanciar DTO " + dtoClass.getSimpleName(), e);
+        }
+    }
+
+    private void populateFields(Object target, Map<String, Object> fields) {
+        Class<?> targetClass = target.getClass();
         fields.forEach((fieldName, value) -> {
             try {
-                Field field = entityClass.getDeclaredField(fieldName);
+                Field field = targetClass.getDeclaredField(fieldName);
                 field.setAccessible(true);
                 
-                // Verifica se o campo é @ReadOnly
-                if (field.isAnnotationPresent(ReadOnly.class)) {
+                // Verifica se o campo é @ReadOnly (apenas para entidades)
+                if (targetClass.isAnnotationPresent(jakarta.persistence.Entity.class) && 
+                    field.isAnnotationPresent(ReadOnly.class)) {
                     return; // Ignora campos readonly
                 }
                 
                 // Use ObjectMapper para converter o valor para o tipo do campo
                 Object convertedValue = objectMapper.convertValue(value, field.getType());
-                field.set(entity, convertedValue);
+                field.set(target, convertedValue);
             } catch (NoSuchFieldException e) {
-                // Ignora campos que não existem na entidade
+                // Ignora campos que não existem na entidade/DTO
             } catch (IllegalAccessException e) {
                 throw new RuntimeException("Erro ao definir campo " + fieldName, e);
             } catch (IllegalArgumentException e) {

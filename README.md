@@ -380,6 +380,76 @@ O framework inclui suporte a documentação automática via SpringDoc OpenAPI:
 **Configuração:**
 A classe `OpenApiConfig` já está incluída e configurada com informações básicas do projeto.
 
+### Suporte a DTOs
+O framework suporta duas abordagens para trabalhar com DTOs:
+
+#### Opção 1 - Uso Direto em Entidades (Padrão)
+Por padrão, o framework expõe entidades diretamente. Para maior controle, use `@JsonIgnore` e `@ReadOnly`:
+
+```java
+@Entity
+@FasterCRUD(path = "/produtos")
+public class Produto {
+    @Id
+    private Long id;
+    
+    private String nome;
+    
+    @JsonIgnore
+    private String senha;  // Não exposto na API
+    
+    @ReadOnly
+    private String codigoInterno;  // Exposto mas não editável
+}
+```
+
+#### Opção 2 - DTO Manual (Recomendado para APIs Públicas)
+Crie DTOs personalizados e use `@FasterCRUD` com `@EntityMapping`:
+
+```java
+// Entidade JPA
+@Entity
+public class Produto {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    private String nome;
+    private String descricao;
+    private Double preco;
+    
+    // Campo interno não exposto
+    private String codigoInterno;
+    
+    // getters e setters
+}
+
+// DTO para API
+@FasterCRUD(path = "/produtos", isDto = true)
+@EntityMapping(entity = Produto.class)
+public class ProdutoDTO {
+    private Long id;
+    private String nome;
+    private String descricao;
+    private Double preco;
+    
+    // Não inclui codigoInterno - campo sensível
+    
+    // getters e setters
+}
+```
+
+**Vantagens de usar DTOs:**
+- Controle total sobre quais campos são expostos
+- Separação clara entre modelo de domínio e API
+- Possibilidade de transformar dados antes de expor
+- Maior segurança para APIs públicas
+
+**Comportamento:**
+- Requisições POST/PUT/PATCH recebem DTO → mapeado para Entidade → salvo
+- Respostas GET retornam Entidade → mapeado para DTO → JSON
+- Apenas campos com mesmo nome são mapeados automaticamente
+
 ## Dependências
 
 O framework requer as seguintes dependências (já incluídas no pom.xml):
@@ -394,6 +464,7 @@ O framework requer as seguintes dependências (já incluídas no pom.xml):
 **Funcionalidades Avançadas:**
 - Spring Data Envers 3.2.5+ (para auditoria)
 - SpringDoc OpenAPI Starter WebMVC UI 2.3.0+ (para documentação Swagger)
+- MapStruct 1.5.5.Final (para mapeamento DTO ↔ Entity)
 
 **Testes:**
 - Spring Boot Starter Test
@@ -649,12 +720,16 @@ private String codigoInterno;
 
 Funcionalidades planejadas para versões futuras:
 
-- [ ] Suporte a DTOs com mapeamento automático
-- [ ] Endpoints customizáveis via annotations
-- [ ] Suporte a GraphQL
-- [ ] Cache integrado
-- [ ] Métricas e monitoring integrados
-- [ ] Suporte a multi-tenancy
+- [ ] **Suporte a DTOs (Abordagem Híbrida)**
+  - **Opção 1 - Geração automática:** Se `@FasterCRUD` for usado na entidade, gerar DTO automaticamente em build-time
+    - Respeita `@JsonIgnore` (não inclui no DTO)
+    - Respeita `@ReadOnly` (inclui mas marca como não-editável)
+    - Usa MapStruct ou similar para mapeamento
+  - **Opção 2 - DTO manual:** Se `@FasterCRUD` for usado em um DTO, mapear para entidade automaticamente
+    - Usuário tem controle total sobre estrutura do DTO
+    - Annotation `@EntityMapping` para especificar entidade alvo
+    - Mapeamento automático via reflection ou MapStruct
+  - **Benefício:** Flexibilidade máxima - usuários simples usam geração automática, usuários avançados usam DTOs customizados
 
 ## Contribuindo
 

@@ -1,7 +1,9 @@
 package core;
 
+import annotation.EntityMapping;
 import annotation.FasterCRUD;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.Entity;
 import jakarta.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,43 +51,72 @@ public class FasterCrudInitializer implements ApplicationRunner {
     @Autowired
     private Validator validator;
 
+    @Autowired
+    private DtoMapper dtoMapper;
+
     @Override
     public void run(ApplicationArguments args) throws Exception {
         logger.info(">>> Escaneando pacote: {}", basePackage);
-        Set<Class<?>> entities = scanEntities(basePackage);
-        logger.info(">>> Entidades encontradas: {}", entities.size());
-        entities.forEach(e -> logger.info("   - {}", e.getName()));
+        Set<Class<?>> classes = scanEntities(basePackage);
+        logger.info(">>> Classes encontradas: {}", classes.size());
+        classes.forEach(e -> logger.info("   - {}", e.getName()));
 
-        for (Class<?> entityClass : entities) {
-            registerCrudForEntity(entityClass);
+        for (Class<?> clazz : classes) {
+            registerCrudForClass(clazz);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private <T> void registerCrudForEntity(Class<T> entityClass) {
-        FasterCRUD config = entityClass.getAnnotation(FasterCRUD.class);
+    private <T> void registerCrudForClass(Class<T> clazz) {
+        FasterCRUD config = clazz.getAnnotation(FasterCRUD.class);
         String path = config.path().isEmpty()
-                ? "/" + entityClass.getSimpleName().toLowerCase()
+                ? "/" + clazz.getSimpleName().toLowerCase()
                 : config.path();
 
         if (!path.startsWith("/")) {
             path = "/" + path;
         }
 
-        JpaEntityInformation<T, ?> info =
-                (JpaEntityInformation<T, ?>) JpaEntityInformationSupport.getEntityInformation(entityClass, entityManager);
-        SimpleJpaRepository<T, Long> repository = new SimpleJpaRepository<>(info, entityManager);
+        boolean isDto = config.isDto();
+        Class<?> entityClass;
+        
+        if (isDto) {
+            // Se for DTO, obter a entidade alvo via @EntityMapping
+            EntityMapping entityMapping = clazz.getAnnotation(EntityMapping.class);
+            if (entityMapping == null) {
+                throw new IllegalArgumentException("DTO " + clazz.getName() + " deve ter @EntityMapping annotation");
+            }
+            entityClass = entityMapping.entity();
+            logger.info(">>> Registrando DTO: {} -> Entidade: {}", clazz.getSimpleName(), entityClass.getSimpleName());
+        } else {
+            // Se for entidade, usar diretamente
+            entityClass = clazz;
+            logger.info(">>> Registrando Entidade: {}", entityClass.getSimpleName());
+        }
 
-        GenericCrudService<T> service = new GenericCrudService<>(repository, entityClass, transactionManager, validator, entityManager);
-        GenericCrudController<T> controller = new GenericCrudController<>(service, path);
+        JpaEntityInformation<?, ?> info =
+                JpaEntityInformationSupport.getEntityInformation(entityClass, entityManager);
+        SimpleJpaRepository<?, Long> repository = new SimpleJpaRepository<>(info, entityManager);
 
-        String beanName = entityClass.getSimpleName().toLowerCase() + "Controller";
+        @SuppressWarnings("unchecked")
+        GenericCrudService<?> service;
+        if (isDto) {
+            service = new GenericCrudService<Object>((SimpleJpaRepository<Object, Long>) repository, 
+                    (Class<Object>) entityClass, transactionManager, validator, entityManager, dtoMapper, clazz);
+        } else {
+            service = new GenericCrudService<Object>((SimpleJpaRepository<Object, Long>) repository, 
+                    (Class<Object>) entityClass, transactionManager, validator, entityManager);
+        }
+        
+        GenericCrudController<?> controller = new GenericCrudController<>(service, path);
+
+        String beanName = clazz.getSimpleName().toLowerCase() + "Controller";
         applicationContext.getBeanFactory().registerSingleton(beanName, controller);
 
         // Registra os mapeamentos
         registerControllerMappings(controller, path);
         
-        logger.info(">>> CRUD registrado para entidade: {} com path: {}", entityClass.getSimpleName(), path);
+        logger.info(">>> CRUD registrado para: {} com path: {}", clazz.getSimpleName(), path);
     }
 
     private void registerControllerMappings(Object controller, String basePath) {

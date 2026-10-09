@@ -25,6 +25,7 @@ import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import java.lang.reflect.Method;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -53,6 +54,9 @@ public class FasterCrudInitializer implements ApplicationRunner {
 
     @Autowired
     private DtoMapper dtoMapper;
+
+    @Autowired
+    private CrudRegistrationRegistry registrationRegistry;
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
@@ -109,43 +113,75 @@ public class FasterCrudInitializer implements ApplicationRunner {
                     (Class<Object>) entityClass, transactionManager, validator, entityManager, dtoMapper, null);
         }
         
-        GenericCrudController<?> controller = new GenericCrudController<>(service, path);
+        GenericCrudController<?> controller = new GenericCrudController<>(
+                service,
+                path,
+                config.enableGet(),
+                config.enablePost(),
+                config.enablePut(),
+                config.enablePatch(),
+                config.enableDelete());
 
         String beanName = clazz.getSimpleName().toLowerCase() + "Controller";
         applicationContext.getBeanFactory().registerSingleton(beanName, controller);
 
         // Registra os mapeamentos
-        registerControllerMappings(controller, path);
+        Set<CrudOperation> operations = EnumSet.noneOf(CrudOperation.class);
+        if (config.enableGet()) {
+            operations.add(CrudOperation.GET_LIST);
+            operations.add(CrudOperation.GET_ONE);
+        }
+        if (config.enablePost()) {
+            operations.add(CrudOperation.POST);
+        }
+        if (config.enablePut()) {
+            operations.add(CrudOperation.PUT);
+        }
+        if (config.enablePatch()) {
+            operations.add(CrudOperation.PATCH);
+        }
+        if (config.enableDelete()) {
+            operations.add(CrudOperation.DELETE);
+        }
+
+        registerControllerMappings(controller, path, operations);
+        registrationRegistry.add(new CrudRegistration(path, clazz, entityClass, isDto, operations));
         
         logger.info(">>> CRUD registrado para: {} com path: {}", clazz.getSimpleName(), path);
     }
 
-    private void registerControllerMappings(Object controller, String basePath) {
+    private void registerControllerMappings(Object controller, String basePath, Set<CrudOperation> operations) {
         for (Method method : controller.getClass().getDeclaredMethods()) {
             String subPath = "";
             RequestMethod httpMethod = null;
+            CrudOperation operation = null;
 
             if (method.isAnnotationPresent(GetMapping.class)) {
                 GetMapping annotation = method.getAnnotation(GetMapping.class);
                 subPath = annotation.value().length > 0 ? annotation.value()[0] : "";
                 httpMethod = RequestMethod.GET;
+                operation = subPath.isEmpty() ? CrudOperation.GET_LIST : CrudOperation.GET_ONE;
             } else if (method.isAnnotationPresent(PostMapping.class)) {
                 httpMethod = RequestMethod.POST;
+                operation = CrudOperation.POST;
             } else if (method.isAnnotationPresent(PutMapping.class)) {
                 PutMapping annotation = method.getAnnotation(PutMapping.class);
                 subPath = annotation.value().length > 0 ? annotation.value()[0] : "";
                 httpMethod = RequestMethod.PUT;
+                operation = CrudOperation.PUT;
             } else if (method.isAnnotationPresent(DeleteMapping.class)) {
                 DeleteMapping annotation = method.getAnnotation(DeleteMapping.class);
                 subPath = annotation.value().length > 0 ? annotation.value()[0] : "";
                 httpMethod = RequestMethod.DELETE;
+                operation = CrudOperation.DELETE;
             } else if (method.isAnnotationPresent(PatchMapping.class)) {
                 PatchMapping annotation = method.getAnnotation(PatchMapping.class);
                 subPath = annotation.value().length > 0 ? annotation.value()[0] : "";
                 httpMethod = RequestMethod.PATCH;
+                operation = CrudOperation.PATCH;
             }
 
-            if (httpMethod != null) {
+            if (httpMethod != null && operation != null && operations.contains(operation)) {
                 String fullPath = basePath + subPath;
                 RequestMappingInfo mappingInfo = RequestMappingInfo
                         .paths(fullPath)

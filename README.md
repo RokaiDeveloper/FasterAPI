@@ -114,6 +114,27 @@ Endpoints gerados automaticamente:
 | PATCH  | `/{path}/{id}`    | Atualização parcial      |
 | DELETE | `/{path}/{id}`    | Remove                   |
 
+As operações podem ser habilitadas individualmente. Uma operação desabilitada não
+é registrada no Spring MVC e retorna 404:
+
+```java
+@Entity
+@FasterCRUD(
+    path = "/produtos",
+    enableGet = true,
+    enablePost = true,
+    enablePut = true,
+    enablePatch = true,
+    enableDelete = false
+)
+public class Produto {
+}
+```
+
+O endpoint `/v3/api-docs` e o Swagger UI documentam somente os mappings
+registrados, incluindo parâmetros de paginação, ordenação, filtros dinâmicos,
+schemas do recurso e respostas HTTP.
+
 Exemplos de requisições:
 
 ```bash

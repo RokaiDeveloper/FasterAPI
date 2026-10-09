@@ -1,9 +1,9 @@
 # Licença Proprietária de Uso Livre do FasterAPI
 
-[English controlling license](LICENSE)
+[English controlling license](../LICENSE)
 
 **Aviso de controle:** esta é uma tradução de cortesia. A versão em inglês em
-`LICENSE` é o texto legal controlador e prevalece em caso de qualquer conflito
+`../LICENSE` é o texto legal controlador e prevalece em caso de qualquer conflito
 ou divergência de interpretação.
 
 Copyright (c) 2026 RokaiDeveloper

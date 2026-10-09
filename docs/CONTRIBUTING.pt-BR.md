@@ -1,6 +1,6 @@
 # Contribuindo com o FasterAPI
 
-[English](CONTRIBUTING.md)
+[English](../CONTRIBUTING.md)
 
 Agradecemos por relatar problemas e sugerir melhorias.
 
@@ -8,7 +8,7 @@ Agradecemos por relatar problemas e sugerir melhorias.
 
 Abra uma issue antes de iniciar uma alteração substancial. Use as Discussions
 para perguntas, suporte de uso e ideias iniciais de design. Não divulgue
-vulnerabilidades de segurança; siga a [SECURITY.md](SECURITY.md).
+vulnerabilidades de segurança; siga a [SECURITY.md](../SECURITY.md).
 
 Antes de propor código, confirme que:
 

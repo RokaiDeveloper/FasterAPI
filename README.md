@@ -1,6 +1,6 @@
 # FasterCRUD
 
-**English:** [README.en.md](README.en.md)
+**English:** [README.en.md](docs/README.en.md)
 
 Automatize endpoints REST para entidades JPA com uma anotação.
 
@@ -53,6 +53,19 @@ fasterapi.base-packages=com.seuprojeto.models,com.seuprojeto.dtos
 `fasterapi.base-package` continua compatível com versões anteriores. Os
 caminhos são combinados, duplicatas são ignoradas e entidades e DTOs anotados
 são procurados em todos eles.
+
+Quando os papéis dos pacotes precisam ficar explícitos, use:
+
+```yaml
+fasterapi:
+  model-packages:
+    - com.seuprojeto.domain
+  dto-packages:
+    - com.seuprojeto.api.dto
+```
+
+As propriedades semânticas são combinadas com `base-package` e
+`base-packages`, portanto você pode migrar gradualmente.
 
 ## Validação da instalação
 
@@ -719,10 +732,12 @@ a aplicação exigir regras específicas.
 
 ### A aplicação inicia, mas nenhum CRUD é registrado
 
-O scanner usa `fasterapi.base-package` ou `fasterapi.base-packages` como raízes e
-procura classes anotadas com `@FasterCRUD`; ele não procura apenas classes
-marcadas com `@Entity`. Confirme que os pacotes configurados contêm entidades e
-DTOs no classpath e habilite o log para acompanhar o registro:
+O scanner usa `fasterapi.base-package`, `fasterapi.base-packages`,
+`fasterapi.model-packages` e `fasterapi.dto-packages` como raízes e procura
+classes anotadas com `@FasterCRUD`; ele não procura apenas classes marcadas com
+`@Entity`. Confirme que os pacotes configurados contêm entidades e DTOs no
+classpath e habilite o log para acompanhar o registro. Se nenhum pacote for
+configurado, o FasterAPI registra um aviso e não cria CRUDs.
 
 ```properties
 logging.level.com.rokaidev.fasterapi=DEBUG

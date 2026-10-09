@@ -1,6 +1,6 @@
 # Política de Segurança
 
-[English](SECURITY.md)
+[English](../SECURITY.md)
 
 ## Versões suportadas
 

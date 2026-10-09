@@ -1,6 +1,6 @@
 # Security Policy
 
-[Português (Brasil)](SECURITY.pt-BR.md)
+[Português (Brasil)](docs/SECURITY.pt-BR.md)
 
 ## Supported versions
 

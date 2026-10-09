@@ -1,6 +1,6 @@
 # Contributing to FasterAPI
 
-[Português (Brasil)](CONTRIBUTING.pt-BR.md)
+[Português (Brasil)](docs/CONTRIBUTING.pt-BR.md)
 
 Thank you for reporting problems and suggesting improvements.
 

@@ -1,6 +1,6 @@
 # FasterCRUD
 
-**Português (Brasil):** [README.md](README.md)
+**Português (Brasil):** [README.md](../README.md)
 
 Automate REST endpoints for JPA entities with an annotation.
 
@@ -55,6 +55,19 @@ fasterapi.base-packages=com.seuprojeto.models,com.seuprojeto.dtos
 `fasterapi.base-package` remains compatible with previous versions. Paths are
 combined, duplicates are ignored, and annotated entities and DTOs are scanned
 in all of them.
+
+When package roles should be explicit, use:
+
+```yaml
+fasterapi:
+  model-packages:
+    - com.example.domain
+  dto-packages:
+    - com.example.api.dto
+```
+
+These semantic properties are combined with `base-package` and
+`base-packages`, so migration can be gradual.
 
 ## Installation validation
 
@@ -766,12 +779,14 @@ application requires specific rules.
 
 ### The application starts, but no CRUD is registered
 
-The scanner uses `fasterapi.base-package` or `fasterapi.base-packages` as roots
-and looks for classes annotated with `@FasterCRUD`; it does not look only for
-classes marked with `@Entity`.
+The scanner uses `fasterapi.base-package`, `fasterapi.base-packages`,
+`fasterapi.model-packages`, and `fasterapi.dto-packages` as roots and looks for
+classes annotated with `@FasterCRUD`; it does not look only for classes marked
+with `@Entity`.
 
 Confirm that the configured packages contain entities and DTOs on the classpath
-and enable logging to follow registration:
+and enable logging to follow registration. If no package is configured,
+FasterAPI logs a warning and does not create CRUDs:
 
 ```properties
 logging.level.com.rokaidev.fasterapi=DEBUG
@@ -861,7 +876,7 @@ This project is under the FasterAPI Proprietary Free-Use License. The
 framework may be used as a dependency in personal and commercial applications,
 but FasterAPI code may not be copied, modified, redistributed, or used to
 create derivative versions without written authorization. See the
-[LICENSE](LICENSE) file for the complete terms.
+[LICENSE](../LICENSE) file for the complete terms.
 
 ## Support
 

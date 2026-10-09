@@ -178,6 +178,41 @@ public class CrudIntegrationTest {
     }
 
     @Test
+    void testFilterOperators() throws Exception {
+        mockMvc.perform(post("/test-produtos")
+                .contentType("application/json")
+                .content("{\"nome\":\"Alpha\",\"preco\":10.00}"))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post("/test-produtos")
+                .contentType("application/json")
+                .content("{\"nome\":\"Beta\",\"preco\":20.00}"))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post("/test-produtos")
+                .contentType("application/json")
+                .content("{\"nome\":\"Gamma\",\"preco\":30.00}"))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/test-produtos?nome__like=et"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)));
+        mockMvc.perform(get("/test-produtos?nome__eq=Beta"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)));
+        mockMvc.perform(get("/test-produtos?preco__gt=20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)));
+        mockMvc.perform(get("/test-produtos?preco__lt=20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)));
+        mockMvc.perform(get("/test-produtos?preco__gte=20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)));
+        mockMvc.perform(get("/test-produtos?preco__lte=20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)));
+    }
+
+    @Test
     void testSort_Descending() throws Exception {
         mockMvc.perform(post("/test-produtos")
                 .contentType("application/json")

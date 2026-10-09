@@ -11,6 +11,8 @@ public class FasterApiProperties {
 
     private String basePackage;
     private List<String> basePackages = new ArrayList<>();
+    private List<String> modelPackages = new ArrayList<>();
+    private List<String> dtoPackages = new ArrayList<>();
 
     public String getBasePackage() {
         return basePackage;
@@ -28,18 +30,35 @@ public class FasterApiProperties {
         this.basePackages = basePackages == null ? new ArrayList<>() : basePackages;
     }
 
+    public List<String> getModelPackages() {
+        return modelPackages;
+    }
+
+    public void setModelPackages(List<String> modelPackages) {
+        this.modelPackages = modelPackages == null ? new ArrayList<>() : modelPackages;
+    }
+
+    public List<String> getDtoPackages() {
+        return dtoPackages;
+    }
+
+    public void setDtoPackages(List<String> dtoPackages) {
+        this.dtoPackages = dtoPackages == null ? new ArrayList<>() : dtoPackages;
+    }
+
     public List<String> getScanPackages() {
         List<String> packages = new ArrayList<>();
-        if (basePackage != null) {
-            packages.addAll(splitPackages(basePackage));
-        }
-        for (String configuredPackage : basePackages) {
+        packages.addAll(splitPackages(basePackage));
+        addConfiguredPackages(packages, basePackages);
+        addConfiguredPackages(packages, modelPackages);
+        addConfiguredPackages(packages, dtoPackages);
+        return packages.stream().distinct().toList();
+    }
+
+    private void addConfiguredPackages(List<String> packages, List<String> configuredPackages) {
+        for (String configuredPackage : configuredPackages) {
             packages.addAll(splitPackages(configuredPackage));
         }
-        if (packages.isEmpty()) {
-            return List.of("com.exemplo.entidades");
-        }
-        return packages.stream().distinct().toList();
     }
 
     private List<String> splitPackages(String packages) {

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class GenericCrudService<T> {
@@ -130,43 +131,49 @@ public class GenericCrudService<T> {
             if (filters != null) {
                 filters.forEach((field, value) -> {
                     try {
-                        Field entityField = entityClass.getDeclaredField(field);
-                        entityField.setAccessible(true);
-                        
-                        // Suporte a operadores: field__op=value
-                        String[] parts = field.split("__");
+                        String[] parts = field.split("__", 2);
                         String fieldName = parts[0];
-                        String operation = parts.length > 1 ? parts[1] : "eq";
+                        String operation = parts.length > 1
+                                ? parts[1].toLowerCase(Locale.ROOT)
+                                : "eq";
+                        if (!Set.of("eq", "like", "gt", "lt", "gte", "lte").contains(operation)) {
+                            return;
+                        }
+
+                        Field entityField = findField(entityClass, fieldName);
+                        entityField.setAccessible(true);
                         
                         switch (operation) {
                             case "eq":
                                 predicates.add(cb.equal(root.get(fieldName), convertValue(value, entityField.getType())));
                                 break;
                             case "like":
-                                predicates.add(cb.like(root.get(fieldName), "%" + value + "%"));
+                                if (entityField.getType() == String.class) {
+                                    predicates.add(cb.like(root.get(fieldName), "%" + value + "%"));
+                                }
                                 break;
                             case "gt":
-                                if (Number.class.isAssignableFrom(entityField.getType())) {
+                                if (isNumericType(entityField.getType())) {
                                     predicates.add(cb.gt(root.get(fieldName), (Number) convertValue(value, entityField.getType())));
                                 }
                                 break;
                             case "lt":
-                                if (Number.class.isAssignableFrom(entityField.getType())) {
+                                if (isNumericType(entityField.getType())) {
                                     predicates.add(cb.lt(root.get(fieldName), (Number) convertValue(value, entityField.getType())));
                                 }
                                 break;
                             case "gte":
-                                if (Number.class.isAssignableFrom(entityField.getType())) {
+                                if (isNumericType(entityField.getType())) {
                                     predicates.add(cb.ge(root.get(fieldName), (Number) convertValue(value, entityField.getType())));
                                 }
                                 break;
                             case "lte":
-                                if (Number.class.isAssignableFrom(entityField.getType())) {
+                                if (isNumericType(entityField.getType())) {
                                     predicates.add(cb.le(root.get(fieldName), (Number) convertValue(value, entityField.getType())));
                                 }
                                 break;
                             default:
-                                predicates.add(cb.equal(root.get(fieldName), convertValue(value, entityField.getType())));
+                                break;
                         }
                     } catch (NoSuchFieldException e) {
                         // Ignora campos que não existem
@@ -176,6 +183,28 @@ public class GenericCrudService<T> {
             
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    private Field findField(Class<?> type, String fieldName) throws NoSuchFieldException {
+        Class<?> current = type;
+        while (current != null) {
+            try {
+                return current.getDeclaredField(fieldName);
+            } catch (NoSuchFieldException ignored) {
+                current = current.getSuperclass();
+            }
+        }
+        throw new NoSuchFieldException(fieldName);
+    }
+
+    private boolean isNumericType(Class<?> type) {
+        return Number.class.isAssignableFrom(type)
+                || type == byte.class
+                || type == short.class
+                || type == int.class
+                || type == long.class
+                || type == float.class
+                || type == double.class;
     }
 
     private Object convertValue(String value, Class<?> targetType) {

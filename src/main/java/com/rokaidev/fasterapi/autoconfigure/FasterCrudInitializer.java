@@ -31,8 +31,10 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 
 import java.lang.reflect.Method;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Component
@@ -67,26 +69,46 @@ public class FasterCrudInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
         List<String> scanPackages = properties.getScanPackages();
+        if (scanPackages.isEmpty()) {
+            logger.warn(">>> Nenhum pacote FasterAPI configurado; nenhum CRUD será registrado. " +
+                    "Configure fasterapi.base-package, fasterapi.base-packages, " +
+                    "fasterapi.model-packages ou fasterapi.dto-packages.");
+            return;
+        }
         logger.info(">>> Escaneando pacotes: {}", scanPackages);
         Set<Class<?>> classes = scanEntities(scanPackages);
         logger.info(">>> Classes encontradas: {}", classes.size());
         classes.forEach(e -> logger.info("   - {}", e.getName()));
+        if (classes.isEmpty()) {
+            logger.warn(">>> Nenhuma classe anotada com @FasterCRUD foi encontrada nos pacotes: {}",
+                    scanPackages);
+            return;
+        }
 
+        validateUniquePaths(classes);
         for (Class<?> clazz : classes) {
             registerCrudForClass(clazz);
+        }
+    }
+
+    private void validateUniquePaths(Set<Class<?>> classes) {
+        Map<String, Class<?>> paths = new HashMap<>();
+        for (Class<?> clazz : classes) {
+            FasterCRUD config = clazz.getAnnotation(FasterCRUD.class);
+            String path = resolvePath(clazz, config);
+            Class<?> previous = paths.putIfAbsent(path, clazz);
+            if (previous != null) {
+                throw new IllegalStateException("Path CRUD duplicado '" + path + "' para "
+                        + previous.getName() + " e " + clazz.getName()
+                        + ". Defina paths diferentes em @FasterCRUD.");
+            }
         }
     }
 
     @SuppressWarnings("unchecked")
     private <T> void registerCrudForClass(Class<T> clazz) {
         FasterCRUD config = clazz.getAnnotation(FasterCRUD.class);
-        String path = config.path().isEmpty()
-                ? "/" + clazz.getSimpleName().toLowerCase()
-                : config.path();
-
-        if (!path.startsWith("/")) {
-            path = "/" + path;
-        }
+        String path = resolvePath(clazz, config);
 
         boolean isDto = config.isDto();
         Class<?> entityClass;
@@ -155,6 +177,19 @@ public class FasterCrudInitializer implements ApplicationRunner {
         registrationRegistry.add(new CrudRegistration(path, clazz, entityClass, isDto, operations));
         
         logger.info(">>> CRUD registrado para: {} com path: {}", clazz.getSimpleName(), path);
+    }
+
+    private String resolvePath(Class<?> clazz, FasterCRUD config) {
+        String path = config.path().isEmpty()
+                ? "/" + clazz.getSimpleName().toLowerCase()
+                : config.path().trim();
+        if (!path.startsWith("/")) {
+            path = "/" + path;
+        }
+        while (path.length() > 1 && path.endsWith("/")) {
+            path = path.substring(0, path.length() - 1);
+        }
+        return path;
     }
 
     private void registerControllerMappings(Object controller, String basePath, Set<CrudOperation> operations) {

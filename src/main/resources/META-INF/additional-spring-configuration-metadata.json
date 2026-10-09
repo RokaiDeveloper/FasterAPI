@@ -1,0 +1,30 @@
+{
+  "properties": [
+    {
+      "name": "fasterapi.base-package",
+      "description": "Legacy single package root for FasterAPI scanning.",
+      "type": "java.lang.String"
+    },
+    {
+      "name": "fasterapi.base-packages",
+      "description": "Package roots for scanning entities and DTOs annotated with @FasterCRUD.",
+      "type": "java.util.List<java.lang.String>"
+    },
+    {
+      "name": "fasterapi.model-packages",
+      "description": "Package roots containing model classes annotated with @FasterCRUD.",
+      "type": "java.util.List<java.lang.String>"
+    },
+    {
+      "name": "fasterapi.dto-packages",
+      "description": "Package roots containing DTO classes annotated with @FasterCRUD.",
+      "type": "java.util.List<java.lang.String>"
+    },
+    {
+      "name": "fasterapi.openapi.enabled",
+      "description": "Whether automatic OpenAPI documentation for generated CRUDs is enabled.",
+      "type": "java.lang.Boolean",
+      "defaultValue": true
+    }
+  ]
+}

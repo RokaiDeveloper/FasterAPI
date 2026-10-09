@@ -131,9 +131,32 @@ public class Produto {
 }
 ```
 
-O endpoint `/v3/api-docs` e o Swagger UI documentam somente os mappings
-registrados, incluindo parâmetros de paginação, ordenação, filtros dinâmicos,
-schemas do recurso e respostas HTTP.
+O endpoint `/v3/api-docs` e o Swagger UI refletem os mappings efetivamente
+registrados no Spring MVC. Portanto, operações desabilitadas não aparecem na
+documentação nem ficam disponíveis como endpoints.
+
+Para cada recurso, o OpenAPI gera:
+
+- Uma tag com o nome da entidade ou DTO anotado com `@FasterCRUD`
+- Schema de resposta `<Recurso>Response`
+- Schema de entrada `<Recurso>Request` para POST, PUT e PATCH
+- Tipos OpenAPI para strings, enums, booleanos, inteiros, números e datas
+- Respostas `200`, `201`, `204`, `400` e `404` conforme a operação
+
+Schemas de entrada não incluem o identificador nem campos marcados com
+`@ReadOnly`. Campos marcados com `@JsonIgnore` não são expostos nos schemas de
+resposta nem nos filtros documentados.
+
+O GET de listagem documenta os parâmetros:
+
+- `page`: página iniciando em `0`
+- `size`: quantidade de registros por página, com padrão `10`
+- `sort`: `campo,direcao`, usando `asc` ou `desc`
+- Filtros por igualdade, como `nome=Notebook` ou `nome__eq=Notebook`
+- `campo__like`, `campo__gt`, `campo__lt`, `campo__gte` e `campo__lte`
+
+Os operadores `gt`, `lt`, `gte` e `lte` são aplicáveis a campos numéricos,
+conforme o comportamento do serviço.
 
 Exemplos de requisições:
 
@@ -400,6 +423,8 @@ O framework inclui suporte a documentação automática via SpringDoc OpenAPI:
 
 **Configuração:**
 A classe `OpenApiConfig` já está incluída e configurada com informações básicas do projeto.
+Não é necessário criar controllers estáticos apenas para que os CRUDs gerados
+apareçam no Swagger.
 
 ### Suporte a DTOs
 O framework suporta duas abordagens para trabalhar com DTOs:
@@ -479,6 +504,8 @@ public class ProdutoDTO {
 - Requisições POST/PUT/PATCH recebem DTO → mapeado para Entidade → salvo
 - Respostas GET retornam Entidade → mapeado para DTO → JSON
 - Apenas campos com mesmo nome são mapeados automaticamente
+- O OpenAPI usa os campos do DTO manual para gerar os schemas e filtros, sem
+  documentar campos adicionais existentes somente na entidade
 
 ## Dependências
 

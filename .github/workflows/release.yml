@@ -65,18 +65,34 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           branch="release/v$version"
-          git checkout -b "$branch"
-          git add pom.xml
-          git commit -m "chore(release): prepare v$version"
-          git push --set-upstream origin "$branch"
+          if git ls-remote --exit-code origin "refs/heads/$branch" >/dev/null 2>&1; then
+            echo "Release branch $branch already exists; reusing it"
+            git fetch origin "$branch"
+            git checkout -B "$branch" "origin/$branch"
+            branch_version="$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)"
+            if [ "$branch_version" != "$version" ]; then
+              echo "Existing branch $branch contains version $branch_version, expected $version"
+              exit 1
+            fi
+          else
+            git checkout -b "$branch"
+            git add pom.xml
+            git commit -m "chore(release): prepare v$version"
+            git push --set-upstream origin "$branch"
+          fi
 
-          gh pr create \
-            --base main \
-            --head "$branch" \
-            --title "chore(release): prepare v$version" \
-            --body "Automated release preparation for FasterAPI v$version.
+          open_pr_count="$(gh pr list --base main --head "$branch" --state open --json number --jq 'length')"
+          if [ "$open_pr_count" = "0" ]; then
+            gh pr create \
+              --base main \
+              --head "$branch" \
+              --title "chore(release): prepare v$version" \
+              --body "Automated release preparation for FasterAPI v$version.
 
           Merge this pull request after the required CI and review checks pass. The merge will trigger the Maven Central publication workflow."
+          else
+            echo "An open release pull request already exists for $branch"
+          fi
         env:
           GH_TOKEN: ${{ github.token }}
 

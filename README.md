@@ -23,10 +23,6 @@ Adicione a versão publicada no Maven Central ao `pom.xml` do seu projeto:
 Artefato publicado: [io.github.rokaideveloper:fasterapi-spring-boot-starter no
 Maven Central](https://central.sonatype.com/artifact/io.github.rokaideveloper/fasterapi-spring-boot-starter).
 
-Não é necessário instalar o projeto manualmente com `mvn install`, copiar
-classes do framework ou declarar `@ComponentScan` para os pacotes internos. O
-starter é carregado automaticamente pelo Spring Boot.
-
 No arquivo `application.properties`, defina o pacote onde estão suas entidades:
 
 ```properties

@@ -27,11 +27,32 @@ Não é necessário instalar o projeto manualmente com `mvn install`, copiar
 classes do framework ou declarar `@ComponentScan` para os pacotes internos. O
 starter é carregado automaticamente pelo Spring Boot.
 
-No arquivo `application.properties`, defina o pacote onde estão suas entidades:
+No arquivo `application.properties`, defina um ou mais pacotes onde estão suas
+entidades e DTOs anotados com `@FasterCRUD`:
 
 ```properties
 fasterapi.base-package=com.seuprojeto.models
 ```
+
+Para múltiplos caminhos, prefira `fasterapi.base-packages`:
+
+```yaml
+fasterapi:
+  base-packages:
+    - com.seuprojeto.models
+    - com.seuprojeto.dtos
+    - com.seuprojeto.catalogo
+```
+
+Também é possível usar uma lista separada por vírgulas:
+
+```properties
+fasterapi.base-packages=com.seuprojeto.models,com.seuprojeto.dtos
+```
+
+`fasterapi.base-package` continua compatível com versões anteriores. Os
+caminhos são combinados, duplicatas são ignoradas e entidades e DTOs anotados
+são procurados em todos eles.
 
 ## Validação da instalação
 
@@ -698,10 +719,10 @@ a aplicação exigir regras específicas.
 
 ### A aplicação inicia, mas nenhum CRUD é registrado
 
-O scanner usa `fasterapi.base-package` como raiz e procura classes anotadas
-com `@FasterCRUD`; ele não procura apenas classes marcadas com `@Entity`.
-Confirme que o pacote configurado contém as entidades no classpath e habilite
-o log para acompanhar o registro:
+O scanner usa `fasterapi.base-package` ou `fasterapi.base-packages` como raízes e
+procura classes anotadas com `@FasterCRUD`; ele não procura apenas classes
+marcadas com `@Entity`. Confirme que os pacotes configurados contêm entidades e
+DTOs no classpath e habilite o log para acompanhar o registro:
 
 ```properties
 logging.level.com.rokaidev.fasterapi=DEBUG

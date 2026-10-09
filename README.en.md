@@ -29,12 +29,32 @@ There is no need to manually install the project with `mvn install`, copy
 framework classes, or declare `@ComponentScan` for internal packages. The
 starter is loaded automatically by Spring Boot.
 
-In `application.properties`, define the package where your entities are
-located:
+In `application.properties`, define one or more packages containing your
+entities and DTOs annotated with `@FasterCRUD`:
 
 ```properties
 fasterapi.base-package=com.seuprojeto.models
 ```
+
+For multiple paths, prefer `fasterapi.base-packages`:
+
+```yaml
+fasterapi:
+  base-packages:
+    - com.seuprojeto.models
+    - com.seuprojeto.dtos
+    - com.seuprojeto.catalog
+```
+
+You can also use a comma-separated list:
+
+```properties
+fasterapi.base-packages=com.seuprojeto.models,com.seuprojeto.dtos
+```
+
+`fasterapi.base-package` remains compatible with previous versions. Paths are
+combined, duplicates are ignored, and annotated entities and DTOs are scanned
+in all of them.
 
 ## Installation validation
 
@@ -746,12 +766,12 @@ application requires specific rules.
 
 ### The application starts, but no CRUD is registered
 
-The scanner uses `fasterapi.base-package` as its root and looks for classes
-annotated with `@FasterCRUD`; it does not look only for classes marked with
-`@Entity`.
+The scanner uses `fasterapi.base-package` or `fasterapi.base-packages` as roots
+and looks for classes annotated with `@FasterCRUD`; it does not look only for
+classes marked with `@Entity`.
 
-Confirm that the configured package contains the entities on the classpath and
-enable logging to follow registration:
+Confirm that the configured packages contain entities and DTOs on the classpath
+and enable logging to follow registration:
 
 ```properties
 logging.level.com.rokaidev.fasterapi=DEBUG

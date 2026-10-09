@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Import;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 import jakarta.persistence.EntityManager;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnClass({EntityManager.class, RequestMappingHandlerMapping.class})
 @ConditionalOnMissingBean(FasterCrudInitializer.class)
+@EnableConfigurationProperties(FasterApiProperties.class)
 @Import({
         FasterCrudInitializer.class,
         CrudRegistrationRegistry.class,

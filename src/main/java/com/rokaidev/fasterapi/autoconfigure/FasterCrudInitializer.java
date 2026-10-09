@@ -14,7 +14,6 @@ import jakarta.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -32,7 +31,8 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 
 import java.lang.reflect.Method;
 import java.util.EnumSet;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 @Component
@@ -40,8 +40,8 @@ public class FasterCrudInitializer implements ApplicationRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(FasterCrudInitializer.class);
 
-    @Value("${fasterapi.base-package:com.exemplo.entidades}")
-    private String basePackage;
+    @Autowired
+    private FasterApiProperties properties;
 
     @Autowired
     private EntityManager entityManager;
@@ -66,8 +66,9 @@ public class FasterCrudInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        logger.info(">>> Escaneando pacote: {}", basePackage);
-        Set<Class<?>> classes = scanEntities(basePackage);
+        List<String> scanPackages = properties.getScanPackages();
+        logger.info(">>> Escaneando pacotes: {}", scanPackages);
+        Set<Class<?>> classes = scanEntities(scanPackages);
         logger.info(">>> Classes encontradas: {}", classes.size());
         classes.forEach(e -> logger.info("   - {}", e.getName()));
 
@@ -199,14 +200,16 @@ public class FasterCrudInitializer implements ApplicationRunner {
         }
     }
 
-    private Set<Class<?>> scanEntities(String basePackage) throws Exception {
+    private Set<Class<?>> scanEntities(List<String> basePackages) throws Exception {
         ClassPathScanningCandidateComponentProvider scanner =
                 new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AnnotationTypeFilter(FasterCRUD.class));
 
-        Set<Class<?>> classes = new HashSet<>();
-        for (BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
-            classes.add(Class.forName(bd.getBeanClassName()));
+        Set<Class<?>> classes = new LinkedHashSet<>();
+        for (String basePackage : basePackages) {
+            for (BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
+                classes.add(Class.forName(bd.getBeanClassName()));
+            }
         }
         return classes;
     }

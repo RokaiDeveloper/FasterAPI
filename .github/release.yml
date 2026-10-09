@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versão Maven a publicar, por exemplo 1.0.2"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publish Maven release
+    runs-on: ubuntu-latest
+    environment: release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+          server-id: central
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+
+      - name: Configure GPG
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          fingerprint: 18DCB6FACEDA64D63CA1283F9EA33AFF7D208084
+
+      - name: Verify project version
+        run: |
+          expected="${{ inputs.version }}"
+          actual="$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)"
+
+          if [ "$actual" != "$expected" ]; then
+            echo "pom.xml version is $actual, expected $expected"
+            exit 1
+          fi
+
+      - name: Run tests and publish
+        env:
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+        run: |
+          ./mvnw -B clean deploy -Prelease \
+            -Dgpg.keyname=18DCB6FACEDA64D63CA1283F9EA33AFF7D208084

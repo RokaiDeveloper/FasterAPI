@@ -4,23 +4,96 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Versão Maven a publicar, por exemplo 1.0.2"
+        description: "Maven version to release, for example 1.0.2"
         required: true
         type: string
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
-  release:
-    name: Publish Maven release
+  prepare:
+    name: Prepare release pull request
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    environment: release
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
+
+      - name: Configure Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Validate and prepare release version
+        run: |
+          version="${{ inputs.version }}"
+
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Version must use the format MAJOR.MINOR.PATCH, for example 1.0.2"
+            exit 1
+          fi
+
+          if git rev-parse "refs/tags/v$version" >/dev/null 2>&1; then
+            echo "Tag v$version already exists"
+            exit 1
+          fi
+
+          actual="$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)"
+
+          if [ "$actual" = "$version" ]; then
+            echo "pom.xml already contains version $version"
+            exit 1
+          fi
+
+          ./mvnw -B versions:set -DnewVersion="$version" -DgenerateBackupPoms=false
+          ./mvnw -B versions:commit
+
+          git diff --check
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          branch="release/v$version"
+          git checkout -b "$branch"
+          git add pom.xml
+          git commit -m "chore(release): prepare v$version"
+          git push --set-upstream origin "$branch"
+
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "chore(release): prepare v$version" \
+            --body "Automated release preparation for FasterAPI v$version.
+
+          Merge this pull request after the required CI and review checks pass. The merge will trigger the Maven Central publication workflow."
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  publish:
+    name: Publish merged release
+    if: >
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/v')
+    runs-on: ubuntu-latest
+    environment: release
+
+    steps:
+      - name: Checkout merged main
+        uses: actions/checkout@v4
+        with:
+          ref: main
           fetch-depth: 0
 
       - name: Configure Java
@@ -40,17 +113,26 @@ jobs:
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
           fingerprint: 18DCB6FACEDA64D63CA1283F9EA33AFF7D208084
 
-      - name: Verify project version
+      - name: Create release tag
         run: |
-          expected="${{ inputs.version }}"
-          actual="$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)"
+          version="$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)"
 
-          if [ "$actual" != "$expected" ]; then
-            echo "pom.xml version is $actual, expected $expected"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "The merged POM does not contain a stable release version: $version"
             exit 1
           fi
 
-      - name: Run tests and publish
+          if git rev-parse "refs/tags/v$version" >/dev/null 2>&1; then
+            echo "Tag v$version already exists"
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$version" -m "Release v$version"
+          git push origin "v$version"
+
+      - name: Publish release
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}

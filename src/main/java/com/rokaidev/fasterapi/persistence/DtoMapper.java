@@ -1,6 +1,6 @@
-package core;
+package com.rokaidev.fasterapi.persistence;
 
-import annotation.ReadOnly;
+import com.rokaidev.fasterapi.annotation.ReadOnly;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;

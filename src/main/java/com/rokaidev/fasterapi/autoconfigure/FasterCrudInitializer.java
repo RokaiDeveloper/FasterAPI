@@ -1,7 +1,13 @@
-package core;
+package com.rokaidev.fasterapi.autoconfigure;
 
-import annotation.EntityMapping;
-import annotation.FasterCRUD;
+import com.rokaidev.fasterapi.annotation.EntityMapping;
+import com.rokaidev.fasterapi.annotation.FasterCRUD;
+import com.rokaidev.fasterapi.persistence.CrudOperation;
+import com.rokaidev.fasterapi.persistence.CrudRegistration;
+import com.rokaidev.fasterapi.persistence.CrudRegistrationRegistry;
+import com.rokaidev.fasterapi.persistence.DtoMapper;
+import com.rokaidev.fasterapi.persistence.GenericCrudService;
+import com.rokaidev.fasterapi.web.GenericCrudController;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Entity;
 import jakarta.validation.Validator;

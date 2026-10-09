@@ -1,4 +1,4 @@
-package core;
+package com.rokaidev.fasterapi.persistence;
 
 public enum CrudOperation {
     GET_LIST,

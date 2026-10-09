@@ -1,4 +1,8 @@
-package core;
+package com.rokaidev.fasterapi.web;
+
+import com.rokaidev.fasterapi.persistence.GenericCrudService;
+import com.rokaidev.fasterapi.persistence.EntityNotFoundException;
+import com.rokaidev.fasterapi.persistence.ValidationException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

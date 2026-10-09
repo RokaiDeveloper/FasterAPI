@@ -19,50 +19,20 @@ mvn clean install
 ```xml
 <dependency>
     <groupId>com.rokaidev</groupId>
-    <artifactId>fasterAPI</artifactId>
-    <version>1.0</version>
+    <artifactId>fasterapi-spring-boot-starter</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
 </dependency>
 ```
 
-3. Na sua classe principal (`@SpringBootApplication`), adicione o pacote `fasterapi` ao `@ComponentScan`:
+O starter é carregado automaticamente pelo Spring Boot. Não é necessário
+copiar classes do framework nem declarar `@ComponentScan` para os pacotes
+internos.
 
-```java
-@SpringBootApplication
-@ComponentScan(basePackages = {
-    "com.seuprojeto",
-    "annotation",
-    "core"
-})
-public class SuaApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(SuaApplication.class, args);
-    }
-}
-```
-
-4. No arquivo `application.properties`, defina o pacote onde estão suas entidades:
+3. No arquivo `application.properties`, defina o pacote onde estão suas entidades:
 
 ```properties
 fasterapi.base-package=com.seuprojeto.models
 ```
-
-### Opção 2: Copiando arquivos (Alternativa)
-
-1. Crie a estrutura de pacotes e copie os arquivos do framework:
-
-```
-src/main/java/
-├── annotation/
-│   └── FasterCRUD.java
-└── core/
-    ├── FasterCrudInitializer.java
-    ├── GenericCrudService.java
-    ├── GenericCrudController.java
-    ├── EntityNotFoundException.java
-    └── ValidationException.java
-```
-
-2. Siga os passos 3 e 4 da Opção 1 acima.
 
 ## Validação da instalação
 
@@ -80,8 +50,29 @@ Ao iniciar a aplicação, verifique os logs para confirmar que o framework foi i
 **Logs em DEBUG**: Para ver detalhes dos mapeamentos individuais, habilite o nível DEBUG no `application.properties`:
 
 ```properties
-logging.level.core=DEBUG
+logging.level.com.rokaidev.fasterapi=DEBUG
 ```
+
+## Publicação Maven
+
+Para testar o artefato no repositório local:
+
+```bash
+./mvnw clean install
+```
+
+Para publicar no Maven Central, primeiro é necessário criar e verificar o
+namespace `com.rokaidev` no Sonatype Central Portal, configurar um token no
+`~/.m2/settings.xml` com o id `central` e configurar uma chave GPG local.
+Depois, use uma versão final (sem `SNAPSHOT`) e execute:
+
+```bash
+./mvnw clean deploy -Prelease -Dgpg.keyname=SEU_ID_GPG
+```
+
+O profile `release` gera os fontes, Javadoc e assinaturas. O plugin de
+publicação usa o servidor Maven com id `central`; nenhuma credencial deve ser
+armazenada no `pom.xml` ou no repositório.
 
 ## Uso
 
@@ -344,7 +335,10 @@ public class Pedido {
 - Considere usar DTOs para APIs públicas
 
 ### Herança JPA
-Suporte a herança JPA com estratégias de mapeamento:
+
+A herança é gerenciada pelo provedor JPA do projeto cliente. O CRUD automático
+deve ser colocado na raiz concreta do modelo somente quando o contrato de
+serialização e o identificador forem adequados à API.
 
 ```java
 @Entity
@@ -384,38 +378,76 @@ public class Produto {
 }
 ```
 
-**Comportamento:**
-- O JPA incrementa o version automaticamente
-- Conflitos de atualização resultam em `OptimisticLockException`
+O JPA incrementa o version e trata conflitos conforme a configuração do
+projeto. O FasterAPI não transforma exceções de concorrência em um contrato
+HTTP específico.
 
 ### Auditoria
-Use Spring Data Envers para histórico de alterações:
 
-```java
-@Entity
-@FasterCRUD(path = "/produtos")
-@Audited
-public class Produto {
-    @Id
-    private Long id;
-    
-    private String nome;
-    
-    @CreatedDate
-    private LocalDateTime dataCriacao;
-    
-    @LastModifiedDate
-    private LocalDateTime dataAtualizacao;
-}
-```
-
-**Configuração necessária:**
-```properties
-spring.jpa.properties.org.hibernate.envers.audit_table_suffix=_aud
-```
+Auditoria não é incluída no starter. Caso a aplicação use Spring Data
+Auditing, Envers ou outro mecanismo, adicione e configure essas dependências
+no projeto cliente. Campos de auditoria expostos no CRUD seguem as mesmas
+regras de serialização e escrita da entidade, salvo uso de `@ReadOnly` ou
+`@JsonIgnore`.
 
 ### Documentação OpenAPI/Swagger
-O framework inclui suporte a documentação automática via SpringDoc OpenAPI:
+O framework integra automaticamente com SpringDoc OpenAPI quando a dependência
+opcional está presente. Para habilitar Swagger no projeto consumidor, adicione:
+
+```xml
+<dependency>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+    <version>2.3.0</version>
+</dependency>
+```
+
+Com SpringDoc presente, o framework fornece documentação automática via OpenAPI:
+
+Por padrão, a integração é ativada somente quando SpringDoc está disponível no
+classpath. Ela pode ser controlada explicitamente:
+
+```properties
+# padrão: true
+fasterapi.openapi.enabled=true
+```
+
+Para manter o CRUD ativo sem registrar a personalização Swagger:
+
+```properties
+fasterapi.openapi.enabled=false
+```
+
+Se o projeto cliente não incluir SpringDoc, o FasterAPI continua funcionando
+normalmente; apenas `/swagger-ui.html` e `/v3/api-docs` não serão fornecidos
+pelo framework.
+
+As rotas do SpringDoc também podem ser personalizadas pelo projeto cliente,
+usando as propriedades oficiais do SpringDoc:
+
+```properties
+# Rota do documento OpenAPI JSON
+springdoc.api-docs.path=/documentacao/openapi
+
+# Rota da interface Swagger UI
+springdoc.swagger-ui.path=/documentacao/swagger
+```
+
+Nesse exemplo, as URLs serão:
+
+```text
+/documentacao/openapi
+/documentacao/swagger
+```
+
+O FasterAPI não cria uma rota própria para o Swagger. Ele registra os CRUDs na
+instância OpenAPI gerenciada pelo SpringDoc, portanto a documentação aparece
+automaticamente na rota personalizada escolhida pelo cliente. A aplicação
+também pode desabilitar apenas a interface visual:
+
+```properties
+springdoc.swagger-ui.enabled=false
+```
 
 **Acessar a documentação:**
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
@@ -509,66 +541,35 @@ public class ProdutoDTO {
 
 ## Dependências
 
-O framework requer as seguintes dependências (já incluídas no pom.xml):
+O starter é destinado a aplicações Spring Boot 3.x com Java 21 ou superior e
+integra Spring MVC Servlet, Spring Data JPA, Jakarta Persistence, Jakarta Bean
+Validation e Jackson.
 
-**Core:**
-- Spring Boot 3.2.5+
-- Spring Data JPA 3.2.5+
-- Jackson Databind 2.15.2+
-- Spring Boot Starter Validation
-- Jakarta Persistence API 3.1.0+
+O consumidor precisa fornecer o driver e a configuração do banco de dados. O
+starter não inclui banco de dados de produção e não impõe H2 à aplicação.
 
-**Funcionalidades Avançadas:**
-- Spring Data Envers 3.2.5+ (para auditoria)
-- SpringDoc OpenAPI Starter WebMVC UI 2.3.0+ (para documentação Swagger)
-- MapStruct 1.5.5.Final (para mapeamento DTO ↔ Entity)
+SpringDoc é opcional. Para habilitar a documentação, adicione a dependência
+descrita na seção [Documentação OpenAPI/Swagger](#documentação-openapiswagger).
 
-**Testes:**
-- Spring Boot Starter Test
-- Mockito Inline 5.2.0+ (para mocking no Java 21+)
+O FasterAPI não usa MapStruct nem Spring Data Envers. Auditoria, autenticação,
+autorização e regras de negócio continuam sendo responsabilidades da aplicação.
 
-## Executando o exemplo
-
-O projeto inclui um exemplo de uso com a entidade `Produto`. Para executar:
-
-```bash
-mvn spring-boot:run
-```
-
-A aplicação iniciará em http://localhost:8080 com o banco H2 em memória.
-
-Teste os endpoints:
-
-```bash
-# Criar produto
-curl -X POST http://localhost:8080/produtos \
-  -H "Content-Type: application/json" \
-  -d '{"nome":"Notebook","preco":3500.00,"descricao":"Notebook Dell"}'
-
-# Listar produtos
-curl http://localhost:8080/produtos
-
-# Buscar por ID
-curl http://localhost:8080/produtos/1
-
-# Atualizar parcialmente
-curl -X PATCH http://localhost:8080/produtos/1 \
-  -H "Content-Type: application/json" \
-  -d '{"preco":3200.00}'
-```
-
-## Testes
+## Testes do projeto
 
 Execute os testes com:
 
 ```bash
-mvn test
+./mvnw test
 ```
 
-O projeto inclui:
-- Testes unitários para `GenericCrudService` (validação)
-- Testes de integração para o fluxo completo CRUD (20 testes)
-- Testes para paginação, ordenação, filtros e campos readonly
+Para validar o artefato Maven completo:
+
+```bash
+./mvnw clean test package
+```
+
+A suíte cobre o serviço CRUD, entidades JPA, DTOs, paginação, ordenação,
+filtros, `@ReadOnly`, operações seletivas e documentação OpenAPI.
 
 ## Exemplos Avançados
 
@@ -696,81 +697,92 @@ public class ItemPedido {
 ```
 
 ### 5. Auditoria
-Use `@CreatedDate` e `@LastModifiedDate` para rastrear alterações:
 
-```java
-@CreatedDate
-@Column(updatable = false)
-private LocalDateTime dataCriacao;
-
-@LastModifiedDate
-private LocalDateTime dataAtualizacao;
-```
+O FasterAPI não implementa auditoria. Para usar `@CreatedDate`,
+`@LastModifiedDate`, Envers ou outro mecanismo de histórico, configure-o no
+projeto cliente e mantenha esses campos fora das operações automáticas quando
+a aplicação exigir regras específicas.
 
 ## Troubleshooting
 
-### Erro: "Name for argument of type [java.lang.Integer] not specified"
+### A aplicação inicia, mas nenhum CRUD é registrado
 
-**Causa:** O compilador não está preservando nomes de parâmetros.
-
-**Solução:** Adicione a flag `-parameters` ao compilador Maven:
-
-```xml
-<plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-compiler-plugin</artifactId>
-    <configuration>
-        <parameters>true</parameters>
-    </configuration>
-</plugin>
-```
-
-### Erro: "No qualifying bean of type EntityManager"
-
-**Causa:** O EntityManager não está sendo injetado corretamente.
-
-**Solução:** Verifique se você tem um datasource configurado:
+O scanner usa `fasterapi.base-package` como raiz e procura classes anotadas
+com `@FasterCRUD`; ele não procura apenas classes marcadas com `@Entity`.
+Confirme que o pacote configurado contém as entidades no classpath e habilite
+o log para acompanhar o registro:
 
 ```properties
-spring.datasource.url=jdbc:h2:mem:testdb
-spring.datasource.driver-class-name=org.h2.Driver
-spring.jpa.hibernate.ddl-auto=create-drop
+logging.level.com.rokaidev.fasterapi=DEBUG
 ```
 
-### Filtros numéricos não funcionam
+### O contexto falha ao criar o FasterAPI
 
-**Causa:** Operadores `gt`, `lt`, `gte`, `lte` só funcionam em campos do tipo `Number`.
+O starter é condicionado a uma aplicação web Servlet com JPA disponível.
+WebFlux, JDBC puro ou uma aplicação sem `EntityManager` não atendem ao
+contrato atual. O projeto cliente também precisa fornecer datasource,
+provedor JPA e entidades com `@Id`; os identificadores CRUD atuais são
+tratados como `Long`.
 
-**Solução:** Certifique-se de que o campo é um tipo numérico:
+### Existe conflito de mapping ao iniciar
 
-```java
-// Correto
-private Integer quantidade;
-private Long preco;
-private BigDecimal valor;
+Os mappings são registrados dinamicamente no startup. O conflito ocorre quando
+dois recursos usam a mesma combinação de caminho e método HTTP, ou quando uma
+rota da aplicação coincide com uma rota CRUD gerada. Use caminhos únicos em
+`@FasterCRUD(path = "...")` e não crie um segundo controller para a mesma URL.
 
-// Incorreto para operadores numéricos
-private String preco;  // Use gt/lt/gte/lte apenas em Number
+### O Swagger não aparece
+
+A documentação só é criada quando o projeto cliente inclui
+`springdoc-openapi-starter-webmvc-ui` e `fasterapi.openapi.enabled` não está
+definido como `false`. Verifique também se o cliente não desativou:
+
+```properties
+springdoc.api-docs.enabled=false
+springdoc.swagger-ui.enabled=false
 ```
 
-### Campos @ReadOnly ainda estão sendo modificados
+Quando as rotas foram personalizadas, use os caminhos configurados em
+`springdoc.api-docs.path` e `springdoc.swagger-ui.path`.
 
-**Causa:** A annotation `@ReadOnly` não está sendo reconhecida.
+### A documentação mostra schema ou filtros inesperados
 
-**Solução:** Verifique se a annotation está no pacote correto e se foi importada:
+Para DTO automático, a documentação usa os campos da entidade que não possuem
+`@JsonIgnore`. Para DTO manual, usa os campos do tipo anotado com
+`@FasterCRUD(isDto = true)`, não todos os campos da entidade mapeada.
+`@ReadOnly` é removido dos schemas de entrada e `@JsonIgnore` remove campos da
+exposição e dos filtros documentados.
 
-```java
-import annotation.ReadOnly;
+### Um filtro retorna resultado vazio ou não altera a consulta
 
-@ReadOnly
-private String codigoInterno;
-```
+O nome precisa corresponder ao campo Java da entidade ou DTO exposto.
+`gt`, `lt`, `gte` e `lte` são operadores numéricos; `like` é uma busca textual
+parcial. Campos desconhecidos são ignorados pelo serviço, portanto um erro de
+digitação pode parecer uma consulta sem filtro. Ao combinar filtros, todos os
+predicados são aplicados conjuntamente.
+
+### A resposta de listagem tem formato diferente
+
+Sem `page`, `size` e `sort`, a listagem retorna uma coleção JSON. Quando
+qualquer parâmetro de paginação ou ordenação é enviado, retorna um objeto
+paginado com `content`, `totalElements`, `totalPages`, `number`, `size`,
+`first` e `last`. Esse comportamento deve ser refletido no cliente gerado ou
+no contrato OpenAPI consumido.
 
 ## Limitações
 
-- **Transações complexas:** O framework usa transações simples. Para lógica de negócio complexa, considere criar Services customizados.
-- **Segurança:** O framework não inclui autenticação/autorização. Use Spring Security para proteger endpoints.
-- **Performance:** Para queries complexas, considere criar repositories customizados com `@Query`.
+- **Stack:** o suporte atual é Spring MVC Servlet + Spring Data JPA; WebFlux,
+  JDBC puro, MongoDB e R2DBC não são adaptadores suportados.
+- **Identificador:** os identificadores CRUD são tratados como `Long`.
+- **AOT/native:** o scanner e os mappings são configurados em runtime;
+  aplicações nativas/AOT podem exigir uma integração específica de runtime
+  hints.
+- **Domínio:** o serviço não substitui regras de negócio, autorização ou
+  transações compostas.
+- **Relacionamentos:** DTOs próprios podem ser necessários para evitar ciclos,
+  lazy loading inesperado ou respostas extensas.
+- **Filtros:** filtros dinâmicos são baseados em campos diretos; consultas
+  complexas devem usar endpoints ou repositórios específicos.
 
 ## Contribuindo
 
@@ -784,7 +796,11 @@ Contribuições são bem-vindas! Sinta-se à vontade para:
 
 ## Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo LICENSE para mais detalhes.
+Este projeto está sob a FasterAPI Proprietary Free-Use License. O framework
+pode ser usado como dependência em aplicações pessoais e comerciais, mas o
+código do FasterAPI não pode ser copiado, modificado, redistribuído ou usado
+para criar versões derivadas sem autorização escrita. Veja o arquivo LICENSE
+para os termos completos.
 
 ## Suporte
 

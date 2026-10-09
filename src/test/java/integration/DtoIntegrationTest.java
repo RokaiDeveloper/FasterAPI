@@ -1,7 +1,7 @@
 package integration;
 
-import annotation.EntityMapping;
-import annotation.FasterCRUD;
+import com.rokaidev.fasterapi.annotation.EntityMapping;
+import com.rokaidev.fasterapi.annotation.FasterCRUD;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -83,7 +82,6 @@ public class DtoIntegrationTest {
     }
 
     @SpringBootApplication
-    @ComponentScan(basePackages = {"annotation", "core", "integration"})
     static class TestApplication {
     }
 

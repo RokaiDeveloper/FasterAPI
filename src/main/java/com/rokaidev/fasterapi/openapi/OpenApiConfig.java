@@ -1,4 +1,4 @@
-package core;
+package com.rokaidev.fasterapi.openapi;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Components;
@@ -20,11 +20,17 @@ import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.info.Info;
 import org.springdoc.core.customizers.OpenApiCustomizer;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import annotation.ReadOnly;
+import com.rokaidev.fasterapi.annotation.ReadOnly;
+import com.rokaidev.fasterapi.persistence.CrudOperation;
+import com.rokaidev.fasterapi.persistence.CrudRegistration;
+import com.rokaidev.fasterapi.persistence.CrudRegistrationRegistry;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.temporal.Temporal;
@@ -32,9 +38,16 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Configuration
+@ConditionalOnClass(OpenApiCustomizer.class)
+@ConditionalOnProperty(
+        prefix = "fasterapi.openapi",
+        name = "enabled",
+        havingValue = "true",
+        matchIfMissing = true)
 public class OpenApiConfig {
 
     @Bean
+    @ConditionalOnMissingBean(OpenAPI.class)
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()

@@ -1,8 +1,8 @@
 package integration;
 
-import annotation.FasterCRUD;
-import annotation.ReadOnly;
-import core.FasterCrudInitializer;
+import com.rokaidev.fasterapi.annotation.FasterCRUD;
+import com.rokaidev.fasterapi.annotation.ReadOnly;
+import com.rokaidev.fasterapi.autoconfigure.FasterCrudInitializer;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -29,7 +28,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootApplication
-@ComponentScan(basePackages = {"annotation", "core", "integration"})
 class TestApplication {
     public static void main(String[] args) {
         org.springframework.boot.SpringApplication.run(TestApplication.class, args);

@@ -1,0 +1,2 @@
+com.rokaidev.fasterapi.autoconfigure.FasterApiAutoConfiguration
+com.rokaidev.fasterapi.openapi.FasterApiOpenApiAutoConfiguration

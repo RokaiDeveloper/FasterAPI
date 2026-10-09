@@ -1,5 +1,7 @@
-package core;
+package com.rokaidev.fasterapi.web;
 
+import com.rokaidev.fasterapi.persistence.CrudRegistration;
+import com.rokaidev.fasterapi.persistence.CrudRegistrationRegistry;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

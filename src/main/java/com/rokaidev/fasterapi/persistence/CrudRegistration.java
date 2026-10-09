@@ -1,4 +1,4 @@
-package core;
+package com.rokaidev.fasterapi.persistence;
 
 import java.util.Set;
 

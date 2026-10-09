@@ -1,0 +1,64 @@
+FasterAPI Proprietary Free-Use License
+Copyright (c) 2026 RokaiDeveloper
+
+1. Grant of Use
+
+The copyright holder grants the recipient a non-exclusive, worldwide,
+royalty-free license to:
+
+* include the unmodified FasterAPI binary as a dependency of applications;
+* use those applications for personal, commercial, or non-commercial purposes;
+* distribute applications that use FasterAPI as a dependency.
+
+This license does not grant ownership of FasterAPI or of any source code.
+
+2. Restrictions
+
+Except with prior written permission from the copyright holder, the recipient
+must not:
+
+* copy, publish, or redistribute the FasterAPI source code;
+* modify, fork, translate, or create derivative versions of FasterAPI;
+* distribute a modified FasterAPI binary;
+* extract, reuse, or incorporate FasterAPI implementation code into another
+  library, framework, or product;
+* use FasterAPI to create or distribute a substantially similar competing
+  framework;
+* remove or alter copyright, license, or attribution notices.
+
+Application source code, configuration, annotations, and extensions written by
+the recipient remain the recipient's property and are not covered by this
+license, except for portions derived from FasterAPI itself.
+
+3. No Trademark License
+
+This license does not grant permission to use the FasterAPI name, logo, or
+trademarks except as necessary to identify the dependency.
+
+4. Disclaimer of Warranty
+
+FASTERAPI IS PROVIDED "AS IS", WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE, TITLE, AND NON-INFRINGEMENT. THE COPYRIGHT HOLDER DOES NOT WARRANT
+THAT THE SOFTWARE WILL BE ERROR-FREE, SECURE, OR AVAILABLE WITHOUT
+INTERRUPTION.
+
+5. Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE COPYRIGHT HOLDER SHALL NOT BE
+LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR
+PUNITIVE DAMAGES, OR FOR LOSS OF DATA, PROFITS, REVENUE, OR BUSINESS,
+ARISING FROM OR RELATED TO THE USE OF FASTERAPI.
+
+6. Termination
+
+This license terminates automatically if the recipient violates its
+restrictions. Rights granted for applications already distributed before
+termination remain limited to continued operation of those applications,
+provided no further violation occurs.
+
+7. Acceptance
+
+Using, downloading, or distributing FasterAPI constitutes acceptance of this
+license. If these terms are not acceptable, do not use or distribute
+FasterAPI.

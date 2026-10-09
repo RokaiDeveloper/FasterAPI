@@ -104,8 +104,9 @@ public class FasterCrudInitializer implements ApplicationRunner {
             service = new GenericCrudService<Object>((SimpleJpaRepository<Object, Long>) repository, 
                     (Class<Object>) entityClass, transactionManager, validator, entityManager, dtoMapper, clazz);
         } else {
+            // Opção 1: DTO automático - usa dtoMapper para filtrar campos com @JsonIgnore
             service = new GenericCrudService<Object>((SimpleJpaRepository<Object, Long>) repository, 
-                    (Class<Object>) entityClass, transactionManager, validator, entityManager);
+                    (Class<Object>) entityClass, transactionManager, validator, entityManager, dtoMapper, null);
         }
         
         GenericCrudController<?> controller = new GenericCrudController<>(service, path);

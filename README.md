@@ -383,25 +383,34 @@ A classe `OpenApiConfig` já está incluída e configurada com informações bá
 ### Suporte a DTOs
 O framework suporta duas abordagens para trabalhar com DTOs:
 
-#### Opção 1 - Uso Direto em Entidades (Padrão)
-Por padrão, o framework expõe entidades diretamente. Para maior controle, use `@JsonIgnore` e `@ReadOnly`:
+#### Opção 1 - DTO Automático (Padrão)
+Por padrão, quando você usa `@FasterCRUD` em uma entidade, o framework automaticamente filtra campos marcados com `@JsonIgnore` nas respostas da API:
 
 ```java
 @Entity
-@FasterCRUD(path = "/produtos")
-public class Produto {
+@FasterCRUD(path = "/usuarios")
+public class Usuario {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
     private String nome;
+    private String email;
     
     @JsonIgnore
     private String senha;  // Não exposto na API
     
-    @ReadOnly
-    private String codigoInterno;  // Exposto mas não editável
+    @JsonIgnore
+    private String token;  // Não exposto na API
+    
+    // getters e setters
 }
 ```
+
+**Comportamento:**
+- Requisições POST/PUT/PATCH aceitam todos os campos (incluindo sensíveis)
+- Respostas GET retornam apenas campos sem `@JsonIgnore`
+- Campos com `@JsonIgnore` são salvos no banco mas não expostos na API
 
 #### Opção 2 - DTO Manual (Recomendado para APIs Públicas)
 Crie DTOs personalizados e use `@FasterCRUD` com `@EntityMapping`:
@@ -439,7 +448,7 @@ public class ProdutoDTO {
 }
 ```
 
-**Vantagens de usar DTOs:**
+**Vantagens de usar DTOs manuais:**
 - Controle total sobre quais campos são expostos
 - Separação clara entre modelo de domínio e API
 - Possibilidade de transformar dados antes de expor
@@ -712,24 +721,8 @@ private String codigoInterno;
 ## Limitações
 
 - **Transações complexas:** O framework usa transações simples. Para lógica de negócio complexa, considere criar Services customizados.
-- **DTOs:** O framework expõe entidades diretamente. Para APIs públicas, considere usar DTOs e mapeamento manual.
 - **Segurança:** O framework não inclui autenticação/autorização. Use Spring Security para proteger endpoints.
 - **Performance:** Para queries complexas, considere criar repositories customizados com `@Query`.
-
-## Roadmap
-
-Funcionalidades planejadas para versões futuras:
-
-- [ ] **Suporte a DTOs (Abordagem Híbrida)**
-  - **Opção 1 - Geração automática:** Se `@FasterCRUD` for usado na entidade, gerar DTO automaticamente em build-time
-    - Respeita `@JsonIgnore` (não inclui no DTO)
-    - Respeita `@ReadOnly` (inclui mas marca como não-editável)
-    - Usa MapStruct ou similar para mapeamento
-  - **Opção 2 - DTO manual:** Se `@FasterCRUD` for usado em um DTO, mapear para entidade automaticamente
-    - Usuário tem controle total sobre estrutura do DTO
-    - Annotation `@EntityMapping` para especificar entidade alvo
-    - Mapeamento automático via reflection ou MapStruct
-  - **Benefício:** Flexibilidade máxima - usuários simples usam geração automática, usuários avançados usam DTOs customizados
 
 ## Contribuindo
 

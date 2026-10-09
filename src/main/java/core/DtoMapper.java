@@ -1,5 +1,7 @@
 package core;
 
+import annotation.ReadOnly;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Component;
@@ -29,7 +31,7 @@ public class DtoMapper {
     public <D, E> E toEntity(D dto, Class<E> entityClass) {
         try {
             E entity = entityClass.getDeclaredConstructor().newInstance();
-            mapFields(dto, entity);
+            mapFields(dto, entity, false);
             return entity;
         } catch (Exception e) {
             throw new RuntimeException("Erro ao converter DTO para entidade", e);
@@ -42,10 +44,41 @@ public class DtoMapper {
     public <E, D> D toDto(E entity, Class<D> dtoClass) {
         try {
             D dto = dtoClass.getDeclaredConstructor().newInstance();
-            mapFields(entity, dto);
+            mapFields(entity, dto, false);
             return dto;
         } catch (Exception e) {
             throw new RuntimeException("Erro ao converter entidade para DTO", e);
+        }
+    }
+
+    /**
+     * Converte uma entidade para um DTO filtrado (respeita @JsonIgnore).
+     * Usado para Opção 1 - geração automática de DTO.
+     */
+    public <E> Map<String, Object> toFilteredDto(E entity) {
+        try {
+            Map<String, Object> dto = new HashMap<>();
+            Class<?> entityClass = entity.getClass();
+            Map<String, Field> fields = getAllFields(entityClass);
+            
+            for (Map.Entry<String, Field> entry : fields.entrySet()) {
+                Field field = entry.getValue();
+                field.setAccessible(true);
+                
+                // Ignora campos com @JsonIgnore
+                if (field.isAnnotationPresent(JsonIgnore.class)) {
+                    continue;
+                }
+                
+                Object value = field.get(entity);
+                if (value != null) {
+                    dto.put(entry.getKey(), value);
+                }
+            }
+            
+            return dto;
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao converter entidade para DTO filtrado", e);
         }
     }
 
@@ -54,7 +87,7 @@ public class DtoMapper {
      */
     public <D, E> void updateEntity(D dto, E entity) {
         try {
-            mapFields(dto, entity);
+            mapFields(dto, entity, false);
         } catch (Exception e) {
             throw new RuntimeException("Erro ao atualizar entidade com DTO", e);
         }
@@ -64,7 +97,7 @@ public class DtoMapper {
      * Mapeia campos de um objeto para outro usando reflection.
      * Copia campos com o mesmo nome e tipo compatível.
      */
-    private void mapFields(Object source, Object target) throws Exception {
+    private void mapFields(Object source, Object target, boolean filterJsonIgnore) throws Exception {
         Class<?> sourceClass = source.getClass();
         Class<?> targetClass = target.getClass();
 
@@ -77,6 +110,11 @@ public class DtoMapper {
             Field targetField = targetFields.get(fieldName);
 
             if (targetField != null && isTypeCompatible(sourceField.getType(), targetField.getType())) {
+                // Se estiver filtrando @JsonIgnore e o campo alvo tiver, ignora
+                if (filterJsonIgnore && targetField.isAnnotationPresent(JsonIgnore.class)) {
+                    continue;
+                }
+                
                 sourceField.setAccessible(true);
                 targetField.setAccessible(true);
                 Object value = sourceField.get(source);

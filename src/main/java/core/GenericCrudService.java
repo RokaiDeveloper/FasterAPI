@@ -66,7 +66,7 @@ public class GenericCrudService<T> {
         this.entityManager = entityManager;
         this.dtoMapper = dtoMapper;
         this.dtoClass = dtoClass;
-        this.useDto = true;
+        this.useDto = dtoClass != null; // Se dtoClass é null, usa Opção 1 (DTO automático)
     }
 
     @SuppressWarnings("unchecked")
@@ -76,8 +76,12 @@ public class GenericCrudService<T> {
             return entities.stream()
                     .map(e -> dtoMapper.toDto(e, (Class<Object>) dtoClass))
                     .collect(java.util.stream.Collectors.toList());
+        } else {
+            // Opção 1: DTO automático - filtra campos com @JsonIgnore
+            return entities.stream()
+                    .map(dtoMapper::toFilteredDto)
+                    .collect(java.util.stream.Collectors.toList());
         }
-        return entities;
     }
 
     @SuppressWarnings("unchecked")
@@ -85,8 +89,10 @@ public class GenericCrudService<T> {
         org.springframework.data.domain.Page<T> entityPage = repository.findAll(pageable);
         if (useDto) {
             return entityPage.map(e -> dtoMapper.toDto(e, (Class<Object>) dtoClass));
+        } else {
+            // Opção 1: DTO automático - filtra campos com @JsonIgnore
+            return entityPage.map(dtoMapper::toFilteredDto);
         }
-        return entityPage;
     }
 
     @SuppressWarnings("unchecked")
@@ -97,8 +103,12 @@ public class GenericCrudService<T> {
             return entities.stream()
                     .map(e -> dtoMapper.toDto(e, (Class<Object>) dtoClass))
                     .collect(java.util.stream.Collectors.toList());
+        } else {
+            // Opção 1: DTO automático - filtra campos com @JsonIgnore
+            return entities.stream()
+                    .map(dtoMapper::toFilteredDto)
+                    .collect(java.util.stream.Collectors.toList());
         }
-        return entities;
     }
 
     @SuppressWarnings("unchecked")
@@ -107,8 +117,10 @@ public class GenericCrudService<T> {
         org.springframework.data.domain.Page<T> entityPage = repository.findAll(spec, pageable);
         if (useDto) {
             return entityPage.map(e -> dtoMapper.toDto(e, (Class<Object>) dtoClass));
+        } else {
+            // Opção 1: DTO automático - filtra campos com @JsonIgnore
+            return entityPage.map(dtoMapper::toFilteredDto);
         }
-        return entityPage;
     }
 
     private Specification<T> buildSpecification(Map<String, String> filters) {
@@ -175,6 +187,9 @@ public class GenericCrudService<T> {
         Optional<T> entity = repository.findById(id);
         if (useDto && entity.isPresent()) {
             return Optional.of(dtoMapper.toDto(entity.get(), (Class<Object>) dtoClass));
+        } else if (entity.isPresent()) {
+            // Opção 1: DTO automático - filtra campos com @JsonIgnore
+            return Optional.of(dtoMapper.toFilteredDto(entity.get()));
         }
         return entity;
     }
@@ -193,10 +208,13 @@ public class GenericCrudService<T> {
                 // Retornar DTO
                 return dtoMapper.toDto(savedEntity, (Class<Object>) dtoClass);
             } else {
+                // Opção 1: DTO automático - trabalha com entidade mas retorna DTO filtrado
                 T entity = newInstance();
                 populateFields(entity, fields);
                 validate(entity);
-                return repository.save(entity);
+                T savedEntity = repository.save(entity);
+                // Retornar DTO filtrado
+                return dtoMapper.toFilteredDto(savedEntity);
             }
         });
     }
@@ -217,9 +235,12 @@ public class GenericCrudService<T> {
                 // Retornar DTO
                 return dtoMapper.toDto(savedEntity, (Class<Object>) dtoClass);
             } else {
+                // Opção 1: DTO automático - trabalha com entidade mas retorna DTO filtrado
                 populateFields(existing, fields);
                 validate(existing);
-                return repository.save(existing);
+                T savedEntity = repository.save(existing);
+                // Retornar DTO filtrado
+                return dtoMapper.toFilteredDto(savedEntity);
             }
         });
     }
@@ -240,9 +261,12 @@ public class GenericCrudService<T> {
                 // Retornar DTO
                 return dtoMapper.toDto(savedEntity, (Class<Object>) dtoClass);
             } else {
+                // Opção 1: DTO automático - trabalha com entidade mas retorna DTO filtrado
                 populateFields(existing, fields);
                 validate(existing);
-                return repository.save(existing);
+                T savedEntity = repository.save(existing);
+                // Retornar DTO filtrado
+                return dtoMapper.toFilteredDto(savedEntity);
             }
         });
     }

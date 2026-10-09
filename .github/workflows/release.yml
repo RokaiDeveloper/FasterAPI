@@ -141,15 +141,20 @@ jobs:
             exit 1
           fi
 
-          if git rev-parse "refs/tags/v$version" >/dev/null 2>&1; then
-            echo "Tag v$version already exists"
-            exit 1
-          fi
-
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "v$version" -m "Release v$version"
-          git push origin "v$version"
+          if git rev-parse "refs/tags/v$version" >/dev/null 2>&1; then
+            tag_commit="$(git rev-list -n 1 "refs/tags/v$version")"
+            head_commit="$(git rev-parse HEAD)"
+            if [ "$tag_commit" != "$head_commit" ]; then
+              echo "Tag v$version exists but does not point to merged main ($tag_commit != $head_commit)"
+              exit 1
+            fi
+            echo "Tag v$version already exists and points to merged main; reusing it"
+          else
+            git tag -a "v$version" -m "Release v$version"
+            git push origin "v$version"
+          fi
 
       - name: Publish release
         env:

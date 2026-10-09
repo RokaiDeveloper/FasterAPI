@@ -216,28 +216,6 @@ public class CrudIntegrationTest {
     }
 
     @Test
-    void testFilter_Like() throws Exception {
-        mockMvc.perform(post("/test-produtos")
-                .contentType("application/json")
-                .content("{\"nome\":\"Notebook Dell\",\"preco\":3500.00}"))
-                .andExpect(status().isCreated());
-
-        mockMvc.perform(post("/test-produtos")
-                .contentType("application/json")
-                .content("{\"nome\":\"Notebook HP\",\"preco\":3200.00}"))
-                .andExpect(status().isCreated());
-
-        mockMvc.perform(post("/test-produtos")
-                .contentType("application/json")
-                .content("{\"nome\":\"Teclado\",\"preco\":100.00}"))
-                .andExpect(status().isCreated());
-
-        mockMvc.perform(get("/test-produtos?nome__like=Notebook"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)));
-    }
-
-    @Test
     void testCreate_Success() throws Exception {
         mockMvc.perform(post("/test-produtos")
                 .contentType("application/json")

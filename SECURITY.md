@@ -1,5 +1,7 @@
 # Security Policy
 
+[Português (Brasil)](SECURITY.pt-BR.md)
+
 ## Supported versions
 
 Security fixes are evaluated against the latest published FasterAPI version.

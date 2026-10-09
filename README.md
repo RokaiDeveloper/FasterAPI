@@ -1,5 +1,7 @@
 # FasterCRUD
 
+**English:** [README.en.md](README.en.md)
+
 Automatize endpoints REST para entidades JPA com uma anotação.
 
 FasterCRUD é um framework minimalista para Spring Boot que gera automaticamente endpoints CRUD RESTful para entidades JPA através de uma simples anotação. Elimine a necessidade de escrever Controllers, Services e Repositories repetitivos.

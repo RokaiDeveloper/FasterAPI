@@ -32,4 +32,29 @@ public @interface FasterCRUD {
      * Se true, deve ser usado com @EntityMapping para especificar a entidade alvo.
      */
     boolean isDto() default false;
+
+    /**
+     * Habilita endpoint GET (listar todos e buscar por ID).
+     */
+    boolean enableGet() default true;
+
+    /**
+     * Habilita endpoint POST (criar).
+     */
+    boolean enablePost() default true;
+
+    /**
+     * Habilita endpoint PUT (atualizar completo).
+     */
+    boolean enablePut() default true;
+
+    /**
+     * Habilita endpoint PATCH (atualizar parcial).
+     */
+    boolean enablePatch() default true;
+
+    /**
+     * Habilita endpoint DELETE (deletar).
+     */
+    boolean enableDelete() default true;
 }

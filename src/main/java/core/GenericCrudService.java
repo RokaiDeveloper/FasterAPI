@@ -289,7 +289,9 @@ public class GenericCrudService<T> {
 
     private T newInstance() {
         try {
-            return entityClass.getDeclaredConstructor().newInstance();
+            var constructor = entityClass.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            return constructor.newInstance();
         } catch (Exception e) {
             throw new RuntimeException("Erro ao instanciar " + entityClass.getSimpleName(), e);
         }
@@ -298,7 +300,9 @@ public class GenericCrudService<T> {
     @SuppressWarnings("unchecked")
     private Object newInstanceDto() {
         try {
-            return dtoClass.getDeclaredConstructor().newInstance();
+            var constructor = dtoClass.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            return constructor.newInstance();
         } catch (Exception e) {
             throw new RuntimeException("Erro ao instanciar DTO " + dtoClass.getSimpleName(), e);
         }

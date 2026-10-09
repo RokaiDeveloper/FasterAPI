@@ -30,7 +30,9 @@ public class DtoMapper {
      */
     public <D, E> E toEntity(D dto, Class<E> entityClass) {
         try {
-            E entity = entityClass.getDeclaredConstructor().newInstance();
+            var constructor = entityClass.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            E entity = constructor.newInstance();
             mapFields(dto, entity, false);
             return entity;
         } catch (Exception e) {
@@ -43,7 +45,9 @@ public class DtoMapper {
      */
     public <E, D> D toDto(E entity, Class<D> dtoClass) {
         try {
-            D dto = dtoClass.getDeclaredConstructor().newInstance();
+            var constructor = dtoClass.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            D dto = constructor.newInstance();
             mapFields(entity, dto, false);
             return dto;
         } catch (Exception e) {

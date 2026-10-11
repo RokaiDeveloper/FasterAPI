@@ -1,11 +1,10 @@
-
 name: Release
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Maven version to release, for example 1.0.3"
+        description: "Maven version to release, for example 1.0.2"
         required: true
         type: string
 
@@ -26,9 +25,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout main
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
 
       - name: Configure Java
@@ -38,7 +38,7 @@ jobs:
           java-version: "17"
           cache: maven
 
-      - name: Validate and prepare release version
+      - name: Validate and prepare release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ inputs.version }}
@@ -48,96 +48,66 @@ jobs:
           version="$RELEASE_VERSION"
 
           if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Version must use the format MAJOR.MINOR.PATCH, for example 1.0.3"
+            echo "Invalid version: $version"
+            echo "Expected format: MAJOR.MINOR.PATCH"
             exit 1
           fi
 
           git fetch origin main --tags
+          git checkout -B main origin/main
 
-          if git rev-parse "refs/tags/v$version" >/dev/null 2>&1; then
-            echo "Tag v$version already exists. Choose a new version."
+          if git ls-remote --exit-code origin \
+            "refs/tags/v$version" >/dev/null 2>&1; then
+            echo "Remote tag v$version already exists."
+            echo "Refusing to prepare a duplicate release."
             exit 1
           fi
 
-          actual="$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)"
+          current_version="$(./mvnw help:evaluate \
+            -Dexpression=project.version \
+            -q -DforceStdout)"
 
-          if [ "$actual" = "$version" ]; then
-            echo "pom.xml already contains version $version."
+          if [ "$current_version" = "$version" ]; then
+            echo "main already contains version $version."
+            echo "Check whether this release has already been merged."
             exit 1
           fi
 
-          branch="release/v$version"
+          branch="release/v${version}-retry-${GITHUB_RUN_ID}"
 
-          if git ls-remote --exit-code origin "refs/heads/$branch" >/dev/null 2>&1; then
-            echo "Release branch $branch already exists."
-            git fetch origin main "$branch"
-            git checkout -B "$branch" "origin/$branch"
+          ./mvnw -B versions:set \
+            -DnewVersion="$version" \
+            -DgenerateBackupPoms=false
 
-            branch_version="$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)"
+          ./mvnw -B versions:commit
 
-            if [ "$branch_version" != "$version" ]; then
-              echo "Existing branch $branch contains version $branch_version, expected $version."
-              echo "Refusing to overwrite an existing release branch."
-              exit 1
-            fi
+          git diff --check
 
-            if git merge-base --is-ancestor "origin/$branch" origin/main; then
-              echo "Release branch $branch is already fully merged into main."
-              echo "Do not recreate a pull request for this version."
-              exit 1
-            fi
-          else
-            ./mvnw -B versions:set \
-              -DnewVersion="$version" \
-              -DgenerateBackupPoms=false
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
 
-            ./mvnw -B versions:commit
+          git checkout -b "$branch" origin/main
+          git add pom.xml
 
-            git diff --check
-
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-            git checkout -b "$branch"
-            git add pom.xml
-
-            if git diff --cached --quiet; then
-              echo "No changes to commit for version $version."
-              exit 1
-            fi
-
-            git commit -m "chore(release): prepare v$version"
-            git push --set-upstream origin "$branch"
-          fi
-
-          git fetch origin main
-
-          if [ "$(git rev-list --count "origin/main..$branch")" -eq 0 ]; then
-            echo "No commits to merge from $branch into main."
+          if git diff --cached --quiet; then
+            echo "No POM changes found."
             exit 1
           fi
 
-          open_pr_count="$(gh pr list \
+          git commit -m "chore(release): prepare v$version"
+          git push --set-upstream origin "$branch"
+
+          gh pr create \
             --base main \
             --head "$branch" \
-            --state open \
-            --json number \
-            --jq 'length')"
+            --title "chore(release): prepare v$version" \
+            --body "Release preparation for FasterAPI v$version.
 
-          if [ "$open_pr_count" = "0" ]; then
-            gh pr create \
-              --base main \
-              --head "$branch" \
-              --title "chore(release): prepare v$version" \
-              --body "Automated release preparation for FasterAPI v$version.
-
-          Merge this pull request after the required CI and review checks pass. The merge will trigger the Maven Central publication workflow."
-          else
-            echo "An open release pull request already exists for $branch."
-          fi
+          This pull request prepares the Maven project version. Merge only after the required checks pass. Merging triggers the Maven Central publication workflow."
 
   publish:
-    name: Publish merged release
+    name: Publish to Maven Central
     if: >
       github.event_name == 'pull_request' &&
       github.event.pull_request.merged == true &&
@@ -152,7 +122,7 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Configure Java
+      - name: Configure Java and Maven Central credentials
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -162,45 +132,41 @@ jobs:
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
 
-      - name: Configure GPG
+      - name: Import GPG signing key
         uses: crazy-max/ghaction-import-gpg@v6
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
           fingerprint: 18DCB6FACEDA64D63CA1283F9EA33AFF7D208084
 
-      - name: Create release tag
+      - name: Validate release and remote tag
+        id: release
+        env:
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
         run: |
           set -euo pipefail
 
-          version="$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)"
+          version="$(./mvnw help:evaluate \
+            -Dexpression=project.version \
+            -q -DforceStdout)"
 
           if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "The merged POM does not contain a stable release version: $version"
+            echo "Invalid stable release version in POM: $version"
             exit 1
           fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          if git rev-parse "refs/tags/v$version" >/dev/null 2>&1; then
-            tag_commit="$(git rev-list -n 1 "refs/tags/v$version")"
-            head_commit="$(git rev-parse HEAD)"
-
-            if [ "$tag_commit" != "$head_commit" ]; then
-              echo "Tag v$version exists but does not point to merged main."
-              echo "Tag commit: $tag_commit"
-              echo "Main commit: $head_commit"
-              exit 1
-            fi
-
-            echo "Tag v$version already exists and points to merged main."
-          else
-            git tag -a "v$version" -m "Release v$version"
-            git push origin "v$version"
+          if git ls-remote --exit-code origin \
+            "refs/tags/v$version" >/dev/null 2>&1; then
+            echo "Remote tag v$version already exists."
+            echo "Refusing to publish a potentially duplicate release."
+            exit 1
           fi
 
-      - name: Publish release
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Preparing publication of FasterAPI $version"
+
+      - name: Test and publish release
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
@@ -209,3 +175,27 @@ jobs:
 
           ./mvnw -B clean deploy -Prelease \
             -Dgpg.keyname=18DCB6FACEDA64D63CA1283F9EA33AFF7D208084
+
+      - name: Create and push release tag
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          version="$RELEASE_VERSION"
+
+          git fetch origin --tags
+
+          if git ls-remote --exit-code origin \
+            "refs/tags/v$version" >/dev/null 2>&1; then
+            echo "Remote tag v$version appeared during publication."
+            echo "Inspect the remote state before proceeding."
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git tag -a "v$version" -m "Release v$version"
+          git push origin "refs/tags/v$version"

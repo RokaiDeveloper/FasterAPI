@@ -1,12 +1,14 @@
+
 name: Release
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Maven version to release, for example 1.0.2"
+        description: "Maven version to release, for example 1.0.3"
         required: true
         type: string
+
   pull_request:
     types:
       - closed
@@ -37,54 +39,91 @@ jobs:
           cache: maven
 
       - name: Validate and prepare release version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.version }}
         run: |
-          version="${{ inputs.version }}"
+          set -euo pipefail
+
+          version="$RELEASE_VERSION"
 
           if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Version must use the format MAJOR.MINOR.PATCH, for example 1.0.2"
+            echo "Version must use the format MAJOR.MINOR.PATCH, for example 1.0.3"
             exit 1
           fi
 
+          git fetch origin main --tags
+
           if git rev-parse "refs/tags/v$version" >/dev/null 2>&1; then
-            echo "Tag v$version already exists"
+            echo "Tag v$version already exists. Choose a new version."
             exit 1
           fi
 
           actual="$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)"
 
           if [ "$actual" = "$version" ]; then
-            echo "pom.xml already contains version $version"
+            echo "pom.xml already contains version $version."
             exit 1
           fi
 
-          ./mvnw -B versions:set -DnewVersion="$version" -DgenerateBackupPoms=false
-          ./mvnw -B versions:commit
-
-          git diff --check
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           branch="release/v$version"
+
           if git ls-remote --exit-code origin "refs/heads/$branch" >/dev/null 2>&1; then
-            echo "Release branch $branch already exists; reusing it"
-            # versions:set changes pom.xml in the workspace; discard that
-            # temporary change before checking out the existing release branch.
-            git reset --hard HEAD
-            git fetch origin "$branch"
+            echo "Release branch $branch already exists."
+            git fetch origin main "$branch"
             git checkout -B "$branch" "origin/$branch"
+
             branch_version="$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)"
+
             if [ "$branch_version" != "$version" ]; then
-              echo "Existing branch $branch contains version $branch_version, expected $version"
+              echo "Existing branch $branch contains version $branch_version, expected $version."
+              echo "Refusing to overwrite an existing release branch."
+              exit 1
+            fi
+
+            if git merge-base --is-ancestor "origin/$branch" origin/main; then
+              echo "Release branch $branch is already fully merged into main."
+              echo "Do not recreate a pull request for this version."
               exit 1
             fi
           else
+            ./mvnw -B versions:set \
+              -DnewVersion="$version" \
+              -DgenerateBackupPoms=false
+
+            ./mvnw -B versions:commit
+
+            git diff --check
+
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
             git checkout -b "$branch"
             git add pom.xml
+
+            if git diff --cached --quiet; then
+              echo "No changes to commit for version $version."
+              exit 1
+            fi
+
             git commit -m "chore(release): prepare v$version"
             git push --set-upstream origin "$branch"
           fi
 
-          open_pr_count="$(gh pr list --base main --head "$branch" --state open --json number --jq 'length')"
+          git fetch origin main
+
+          if [ "$(git rev-list --count "origin/main..$branch")" -eq 0 ]; then
+            echo "No commits to merge from $branch into main."
+            exit 1
+          fi
+
+          open_pr_count="$(gh pr list \
+            --base main \
+            --head "$branch" \
+            --state open \
+            --json number \
+            --jq 'length')"
+
           if [ "$open_pr_count" = "0" ]; then
             gh pr create \
               --base main \
@@ -94,10 +133,8 @@ jobs:
 
           Merge this pull request after the required CI and review checks pass. The merge will trigger the Maven Central publication workflow."
           else
-            echo "An open release pull request already exists for $branch"
+            echo "An open release pull request already exists for $branch."
           fi
-        env:
-          GH_TOKEN: ${{ github.token }}
 
   publish:
     name: Publish merged release
@@ -134,6 +171,8 @@ jobs:
 
       - name: Create release tag
         run: |
+          set -euo pipefail
+
           version="$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)"
 
           if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -143,14 +182,19 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           if git rev-parse "refs/tags/v$version" >/dev/null 2>&1; then
             tag_commit="$(git rev-list -n 1 "refs/tags/v$version")"
             head_commit="$(git rev-parse HEAD)"
+
             if [ "$tag_commit" != "$head_commit" ]; then
-              echo "Tag v$version exists but does not point to merged main ($tag_commit != $head_commit)"
+              echo "Tag v$version exists but does not point to merged main."
+              echo "Tag commit: $tag_commit"
+              echo "Main commit: $head_commit"
               exit 1
             fi
-            echo "Tag v$version already exists and points to merged main; reusing it"
+
+            echo "Tag v$version already exists and points to merged main."
           else
             git tag -a "v$version" -m "Release v$version"
             git push origin "v$version"
@@ -161,5 +205,7 @@ jobs:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
         run: |
+          set -euo pipefail
+
           ./mvnw -B clean deploy -Prelease \
             -Dgpg.keyname=18DCB6FACEDA64D63CA1283F9EA33AFF7D208084

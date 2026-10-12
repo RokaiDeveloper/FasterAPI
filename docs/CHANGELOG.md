@@ -2,6 +2,32 @@
 
 All notable changes to FasterAPI are documented in this file.
 
+## [1.0.2] - 2026-10-09
+
+### Added
+
+- Added support for configuring multiple model and DTO packages through
+  `fasterapi.base-packages`, `fasterapi.model-packages`, and
+  `fasterapi.dto-packages`.
+- Added custom filter operators `eq`, `like`, `gt`, `lt`, `gte`, and `lte`,
+  including numeric type validation.
+- Added Spring Boot configuration metadata for the package scanning
+  properties.
+
+### Changed
+
+- Improved classpath scanning to combine configured packages and ignore
+  duplicates.
+- Added validation for empty package configurations and duplicated CRUD paths.
+- Updated the release workflow to prepare versioned pull requests and publish
+  releases after merge.
+- Pinned the Maven Wrapper to Maven 3.9.16.
+
+### Fixed
+
+- Improved validation and error handling for package scanning and custom
+  filters.
+
 ## [1.0.1] - 2026-10-09
 
 ### Changed
@@ -27,5 +53,6 @@ All notable changes to FasterAPI are documented in this file.
 - Added automatic and manual DTO support, pagination, sorting, filters, PATCH,
   `@ReadOnly`, `@EntityMapping`, and `@JsonIgnore` handling.
 
+[1.0.2]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.2
 [1.0.1]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.1
 [1.0.0]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.0

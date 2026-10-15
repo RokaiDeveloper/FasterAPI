@@ -8,6 +8,8 @@ FasterCRUD is a minimalist Spring Boot framework that automatically generates RE
 
 **[Português (Brasil)](#português-brasil)**
 
+[Changelog](CHANGELOG.md) · [Changelog em português](CHANGELOG.md#português-brasil)
+
 ## Installation
 
 ### Maven Central

@@ -5,6 +5,7 @@ import com.rokaidev.fasterapi.autoconfigure.FasterCrudInitializer;
 import com.rokaidev.fasterapi.autoconfigure.FasterFilterAutoConfiguration;
 import com.rokaidev.fasterapi.persistence.FilterValidationException;
 import com.rokaidev.fasterapi.web.FasterFilters;
+import com.rokaidev.fasterapi.web.FasterFilterQuery;
 import com.rokaidev.fasterapi.web.FilterExceptionHandler;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -127,6 +128,14 @@ public class FasterFilterIntegrationTest {
         public Object list(@FasterFilter(entity = TestProduto.class, fields = {"nome", "preco"}) FasterFilters<TestProduto> filters) {
             return repository.findAll(filters.getSpecification());
         }
+
+        @GetMapping("/simplified")
+        public Object simplifiedList(@FasterFilter(
+                entity = TestProduto.class,
+                fields = {"nome", "preco"}
+        ) FasterFilterQuery<TestProduto> query) {
+            return query.findAll();
+        }
     }
 
     @BeforeEach
@@ -169,6 +178,37 @@ public class FasterFilterIntegrationTest {
     }
 
     @Test
+    public void testFilterWithLessThanOperator() throws Exception {
+        mockMvc.perform(get("/custom-produtos?preco__lt=100"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].nome").value("Mouse"));
+    }
+
+    @Test
+    public void testFilterWithGreaterThanOrEqualOperator() throws Exception {
+        mockMvc.perform(get("/custom-produtos?preco__gte=5000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].nome").value("Notebook"));
+    }
+
+    @Test
+    public void testFilterWithLessThanOrEqualOperator() throws Exception {
+        mockMvc.perform(get("/custom-produtos?preco__lte=50"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].nome").value("Mouse"));
+    }
+
+    @Test
+    public void testPaginationAndSortParametersAreIgnored() throws Exception {
+        mockMvc.perform(get("/custom-produtos?page=0&size=1&sort=preco,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+    }
+
+    @Test
     public void testFilterWithInvalidFieldStrict() throws Exception {
         mockMvc.perform(get("/custom-produtos?descricao=Dell"))
                 .andExpect(status().isBadRequest())
@@ -204,9 +244,24 @@ public class FasterFilterIntegrationTest {
     }
 
     @Test
+    public void testFilterWithInvalidNumericValueStrict() throws Exception {
+        mockMvc.perform(get("/custom-produtos?preco__gt=not-a-number"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("Valor 'not-a-number' inválido para o campo 'preco'")));
+    }
+
+    @Test
     public void testNoFilterReturnsAll() throws Exception {
         mockMvc.perform(get("/custom-produtos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2));
+    }
+
+    @Test
+    public void testSimplifiedFilterQueryReturnsFilteredResults() throws Exception {
+        mockMvc.perform(get("/custom-produtos/simplified?preco__lt=100"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].nome").value("Mouse"));
     }
 }

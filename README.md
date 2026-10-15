@@ -103,6 +103,25 @@ public class Cliente {
 }
 ```
 
+For custom business rules, the controller can use the higher-level facade and
+avoid exposing `Specification`, `FasterFilters` and `JpaSpecificationExecutor`:
+
+```java
+import com.rokaidev.fasterapi.web.FasterFilterQuery;
+
+@GetMapping
+public List<Produto> list(@FasterFilter(
+        entity = Produto.class,
+        fields = {"nome", "preco"},
+        strict = true
+) FasterFilterQuery<Produto> query) {
+    return query.findAll();
+}
+```
+
+`FasterFilterQuery` also supports `findAll(Pageable pageable)` when pagination
+is needed. The existing `FasterFilters` API remains supported.
+
 Automatically generated endpoints:
 
 | Method | URL               | Description               |
@@ -289,6 +308,8 @@ GET /produtos?preco__gt=1000&page=0&size=10&sort=preco,asc
 For custom controllers that need filtering beyond the auto-generated CRUD endpoints, use the `@FasterFilter` annotation to enable validated dynamic filtering:
 
 ```java
+import com.rokaidev.fasterapi.web.FasterFilters;
+
 @RestController
 @RequestMapping("/custom-produtos")
 public class CustomProdutoController {

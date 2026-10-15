@@ -2,6 +2,23 @@
 
 All notable changes to FasterAPI are documented in this file.
 
+## [1.0.3] - 2026-10-15
+
+### Added
+
+- Added `@FasterFilter` for enabling validated dynamic filters in custom
+  controller endpoints.
+- Added `FasterFilters<T>` to expose the raw filters and the generated JPA
+  `Specification<T>`.
+- Added support for the `eq`, `like`, `gt`, `lt`, `gte`, and `lte` filter
+  operators.
+- Added configurable field whitelists and strict or lenient validation modes.
+- Added validation for unknown fields, unsupported operators, and incompatible
+  field types.
+- Added HTTP 400 error handling with descriptive filter validation messages.
+- Added integration coverage for custom filter argument resolution and
+  validation behavior.
+
 ## [1.0.2] - 2026-10-09
 
 ### Added
@@ -54,5 +71,6 @@ All notable changes to FasterAPI are documented in this file.
   `@ReadOnly`, `@EntityMapping`, and `@JsonIgnore` handling.
 
 [1.0.2]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.2
+[1.0.3]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.3
 [1.0.1]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.1
 [1.0.0]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.0

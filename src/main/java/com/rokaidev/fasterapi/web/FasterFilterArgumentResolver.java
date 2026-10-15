@@ -5,10 +5,14 @@ import com.rokaidev.fasterapi.persistence.FilterValidationException;
 import com.rokaidev.fasterapi.persistence.SpecificationBuilder;
 import org.springframework.core.MethodParameter;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.support.JpaEntityInformation;
+import org.springframework.data.jpa.repository.support.JpaEntityInformationSupport;
+import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
+import jakarta.persistence.EntityManager;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -18,11 +22,18 @@ import java.util.stream.Collectors;
 
 public class FasterFilterArgumentResolver implements HandlerMethodArgumentResolver {
 
+    private final EntityManager entityManager;
+
+    public FasterFilterArgumentResolver(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
+
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         // Check if the parameter has @FasterFilter annotation
         return parameter.hasParameterAnnotation(FasterFilter.class)
-                && FasterFilters.class.isAssignableFrom(parameter.getParameterType());
+                && (FasterFilters.class.isAssignableFrom(parameter.getParameterType())
+                || FasterFilterQuery.class.isAssignableFrom(parameter.getParameterType()));
     }
 
     @Override
@@ -65,7 +76,16 @@ public class FasterFilterArgumentResolver implements HandlerMethodArgumentResolv
             throw new FilterValidationException("Erro ao construir filtros: " + e.getMessage(), e);
         }
 
-        return new FasterFilters<>(filters, specification);
+        if (FasterFilters.class.isAssignableFrom(parameter.getParameterType())) {
+            return new FasterFilters<>(filters, specification);
+        }
+
+        JpaEntityInformation<Object, Long> entityInformation =
+                (JpaEntityInformation<Object, Long>) (JpaEntityInformation<?, ?>)
+                        JpaEntityInformationSupport.getEntityInformation(entityClass, entityManager);
+        SimpleJpaRepository<Object, Long> repository = new SimpleJpaRepository<>(
+                entityInformation, entityManager);
+        return new FasterFilterQuery<>(filters, specification, repository);
     }
 
     private boolean isPaginationOrSortParam(String paramName) {

@@ -29,114 +29,36 @@ public class SpecificationBuilder<T> {
     }
     
     public Specification<T> build(Map<String, String> filters) {
-        // Validate immediately before returning lazy specification
-        validateFilters(filters);
+        List<FilterDefinition> definitions = prepareFilters(filters);
         
         return (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            
-            if (filters != null) {
-                filters.forEach((field, value) -> {
-                    try {
-                        String[] parts = field.split("__", 2);
-                        String fieldName = parts[0];
-                        String operation = parts.length > 1
-                                ? parts[1].toLowerCase(Locale.ROOT)
-                                : "eq";
-                        
-                        // Validate operation
-                        if (!Set.of("eq", "like", "gt", "lt", "gte", "lte").contains(operation)) {
-                            if (strict) {
-                                throw new FilterValidationException(
-                                    "Operador '" + operation + "' não suportado. Operadores válidos: eq, like, gt, lt, gte, lte"
-                                );
-                            }
-                            return;
-                        }
-                        
-                        // Validate field is allowed
-                        if (!allowedFields.isEmpty() && !allowedFields.contains(fieldName)) {
-                            if (strict) {
-                                throw new FilterValidationException(
-                                    "Campo '" + fieldName + "' não é permitido para filtro. Campos permitidos: " + allowedFields
-                                );
-                            }
-                            return;
-                        }
-                        
-                        Field entityField = findField(entityClass, fieldName);
-                        entityField.setAccessible(true);
-                        
-                        switch (operation) {
-                            case "eq":
-                                predicates.add(cb.equal(root.get(fieldName), convertValue(value, entityField.getType())));
-                                break;
-                            case "like":
-                                if (entityField.getType() == String.class) {
-                                    predicates.add(cb.like(root.get(fieldName), "%" + value + "%"));
-                                } else if (strict) {
-                                    throw new FilterValidationException(
-                                        "Operador 'like' só pode ser usado em campos do tipo String"
-                                    );
-                                }
-                                break;
-                            case "gt":
-                                if (isNumericType(entityField.getType())) {
-                                    predicates.add(cb.gt(root.get(fieldName), (Number) convertValue(value, entityField.getType())));
-                                } else if (strict) {
-                                    throw new FilterValidationException(
-                                        "Operador 'gt' só pode ser usado em campos numéricos"
-                                    );
-                                }
-                                break;
-                            case "lt":
-                                if (isNumericType(entityField.getType())) {
-                                    predicates.add(cb.lt(root.get(fieldName), (Number) convertValue(value, entityField.getType())));
-                                } else if (strict) {
-                                    throw new FilterValidationException(
-                                        "Operador 'lt' só pode ser usado em campos numéricos"
-                                    );
-                                }
-                                break;
-                            case "gte":
-                                if (isNumericType(entityField.getType())) {
-                                    predicates.add(cb.ge(root.get(fieldName), (Number) convertValue(value, entityField.getType())));
-                                } else if (strict) {
-                                    throw new FilterValidationException(
-                                        "Operador 'gte' só pode ser usado em campos numéricos"
-                                    );
-                                }
-                                break;
-                            case "lte":
-                                if (isNumericType(entityField.getType())) {
-                                    predicates.add(cb.le(root.get(fieldName), (Number) convertValue(value, entityField.getType())));
-                                } else if (strict) {
-                                    throw new FilterValidationException(
-                                        "Operador 'lte' só pode ser usado em campos numéricos"
-                                    );
-                                }
-                                break;
-                            default:
-                                break;
-                        }
-                    } catch (NoSuchFieldException e) {
-                        if (strict) {
-                            throw new FilterValidationException(
-                                "Campo '" + field.split("__")[0] + "' não encontrado na entidade " + entityClass.getSimpleName()
-                            );
-                        }
-                        // In lenient mode, silently ignore
-                    }
-                });
+            for (FilterDefinition definition : definitions) {
+                switch (definition.operation()) {
+                    case "eq" -> predicates.add(cb.equal(
+                            root.get(definition.fieldName()), definition.value()));
+                    case "like" -> predicates.add(cb.like(
+                            root.get(definition.fieldName()), "%" + definition.rawValue() + "%"));
+                    case "gt" -> predicates.add(cb.gt(
+                            root.get(definition.fieldName()), (Number) definition.value()));
+                    case "lt" -> predicates.add(cb.lt(
+                            root.get(definition.fieldName()), (Number) definition.value()));
+                    case "gte" -> predicates.add(cb.ge(
+                            root.get(definition.fieldName()), (Number) definition.value()));
+                    case "lte" -> predicates.add(cb.le(
+                            root.get(definition.fieldName()), (Number) definition.value()));
+                }
             }
-            
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
 
-    private void validateFilters(Map<String, String> filters) {
-        if (filters == null) return;
-        
+    private List<FilterDefinition> prepareFilters(Map<String, String> filters) {
+        List<FilterDefinition> definitions = new ArrayList<>();
+        if (filters == null) {
+            return definitions;
+        }
+
         filters.forEach((field, value) -> {
             String[] parts = field.split("__", 2);
             String fieldName = parts[0];
@@ -144,59 +66,71 @@ public class SpecificationBuilder<T> {
                     ? parts[1].toLowerCase(Locale.ROOT)
                     : "eq";
             
-            // Validate operation
             if (!Set.of("eq", "like", "gt", "lt", "gte", "lte").contains(operation)) {
                 if (strict) {
-                    throw new FilterValidationException(
-                        "Operador '" + operation + "' não suportado. Operadores válidos: eq, like, gt, lt, gte, lte"
-                    );
+                    throw invalidOperator(operation);
                 }
                 return;
             }
             
-            // Validate field is allowed
             if (!allowedFields.isEmpty() && !allowedFields.contains(fieldName)) {
                 if (strict) {
                     throw new FilterValidationException(
-                        "Campo '" + fieldName + "' não é permitido para filtro. Campos permitidos: " + allowedFields
+                            "Campo '" + fieldName + "' não é permitido para filtro. Campos permitidos: " + allowedFields
                     );
                 }
                 return;
             }
             
-            // Validate field exists in entity
             try {
                 Field entityField = findField(entityClass, fieldName);
-                entityField.setAccessible(true);
-                
-                // Validate operator compatibility with field type
-                switch (operation) {
-                    case "like":
-                        if (entityField.getType() != String.class && strict) {
-                            throw new FilterValidationException(
-                                "Operador 'like' só pode ser usado em campos do tipo String"
-                            );
-                        }
-                        break;
-                    case "gt":
-                    case "lt":
-                    case "gte":
-                    case "lte":
-                        if (!isNumericType(entityField.getType()) && strict) {
-                            throw new FilterValidationException(
-                                "Operador '" + operation + "' só pode ser usado em campos numéricos"
-                            );
-                        }
-                        break;
+                Class<?> fieldType = entityField.getType();
+                if ("like".equals(operation) && fieldType != String.class) {
+                    if (strict) {
+                        throw new FilterValidationException(
+                                "Operador 'like' só pode ser usado em campos do tipo String");
+                    }
+                    return;
                 }
+                if (isComparison(operation) && !isNumericType(fieldType)) {
+                    if (strict) {
+                        throw new FilterValidationException(
+                                "Operador '" + operation + "' só pode ser usado em campos numéricos");
+                    }
+                    return;
+                }
+
+                Object convertedValue;
+                try {
+                    convertedValue = "like".equals(operation)
+                            ? value
+                            : convertValue(value, fieldType);
+                } catch (IllegalArgumentException ex) {
+                    if (strict) {
+                        throw new FilterValidationException(
+                                "Valor '" + value + "' inválido para o campo '" + fieldName + "'", ex);
+                    }
+                    return;
+                }
+                definitions.add(new FilterDefinition(fieldName, operation, value, convertedValue));
             } catch (NoSuchFieldException e) {
                 if (strict) {
                     throw new FilterValidationException(
-                        "Campo '" + fieldName + "' não encontrado na entidade " + entityClass.getSimpleName()
+                            "Campo '" + fieldName + "' não encontrado na entidade " + entityClass.getSimpleName()
                     );
                 }
             }
         });
+        return definitions;
+    }
+
+    private FilterValidationException invalidOperator(String operation) {
+        return new FilterValidationException(
+                "Operador '" + operation + "' não suportado. Operadores válidos: eq, like, gt, lt, gte, lte");
+    }
+
+    private boolean isComparison(String operation) {
+        return Set.of("gt", "lt", "gte", "lte").contains(operation);
     }
     
     private Field findField(Class<?> type, String fieldName) throws NoSuchFieldException {
@@ -223,5 +157,8 @@ public class SpecificationBuilder<T> {
     
     private Object convertValue(String value, Class<?> targetType) {
         return objectMapper.convertValue(value, targetType);
+    }
+
+    private record FilterDefinition(String fieldName, String operation, String rawValue, Object value) {
     }
 }

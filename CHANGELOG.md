@@ -7,6 +7,34 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 **Português (Brasil):** [Ver versão em português](#português-brasil)
 
+## [1.0.4] - 2026-10-15
+
+### Added
+
+- Added `FasterFilterQuery<T>` as a high-level facade for custom controllers,
+  hiding `FasterFilters`, JPA `Specification`, and repository implementation
+  details.
+- Added support for executing filtered results directly with `findAll()` and
+  `findAll(Pageable)`.
+
+### Fixed
+
+- Fixed numeric predicates for the `gt`, `lt`, `gte`, and `lte` operators.
+- Fixed strict validation for unsupported fields, operators, incompatible
+  types, and invalid numeric values.
+- Preserved `page`, `size`, and `sort` as resolver-excluded parameters.
+
+### Tests
+
+- Added integration coverage for all comparison operators, invalid filter
+  values, strict validation, ignored pagination parameters, and the simplified
+  `FasterFilterQuery<T>` API.
+
+### Documentation
+
+- Added custom-controller examples using the simplified
+  `com.rokaidev.fasterapi.web.FasterFilterQuery` API.
+
 ## [1.0.3] - 2026-10-15
 
 ### Added
@@ -94,6 +122,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - Added automatic and manual DTO support, pagination, sorting, filters, PATCH,
   `@ReadOnly`, `@EntityMapping`, and `@JsonIgnore` handling.
 
+[1.0.4]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.4
 [1.0.3]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.3
 [1.0.2]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.2
 [1.0.1]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.1
@@ -109,6 +138,35 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 e o projeto segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 **English:** [View the English version](#changelog)
+
+## [1.0.4] - 2026-10-15
+
+### Adicionado
+
+- Adicionada `FasterFilterQuery<T>` como fachada de alto nível para controllers
+  personalizados, ocultando `FasterFilters`, `Specification` do JPA e detalhes
+  da implementação do repositório.
+- Adicionado suporte à execução direta dos resultados filtrados com `findAll()`
+  e `findAll(Pageable)`.
+
+### Corrigido
+
+- Corrigida a construção dos predicates numéricos para os operadores `gt`, `lt`,
+  `gte` e `lte`.
+- Corrigida a validação estrita de campos e operadores não permitidos, tipos
+  incompatíveis e valores numéricos inválidos.
+- Mantidos `page`, `size` e `sort` como parâmetros ignorados pelo resolver.
+
+### Testes
+
+- Adicionada cobertura de integração para todos os operadores comparativos,
+  valores inválidos, validação estrita, parâmetros de paginação ignorados e a
+  API simplificada `FasterFilterQuery<T>`.
+
+### Documentação
+
+- Adicionados exemplos de controllers personalizados usando a API simplificada
+  `com.rokaidev.fasterapi.web.FasterFilterQuery`.
 
 ## [1.0.3] - 2026-10-15
 

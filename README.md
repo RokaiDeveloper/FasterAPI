@@ -282,6 +282,58 @@ GET /produtos?preco__gt=1000&page=0&size=10&sort=preco,asc
 
 **Note:** Numeric operators (`gt`, `lt`, `gte`, `lte`) only work on fields of type `Number` (Integer, Long, BigDecimal, etc.).
 
+### Custom Filters with @FasterFilter
+
+For custom controllers that need filtering beyond the auto-generated CRUD endpoints, use the `@FasterFilter` annotation to enable validated dynamic filtering:
+
+```java
+@RestController
+@RequestMapping("/custom-produtos")
+public class CustomProdutoController {
+
+    @GetMapping
+    public Object list(@FasterFilter(
+        entity = Produto.class,
+        fields = {"nome", "preco"},
+        strict = true
+    ) FasterFilters<Produto> filters) {
+        return repository.findAll(filters.getSpecification());
+    }
+}
+```
+
+**Parameters:**
+
+- `entity`: The JPA entity class to validate filter fields against
+- `fields`: Array of allowed field names for filtering (whitelist)
+- `strict`: If `true` (default), throws HTTP 400 for invalid/unknown filters. If `false`, silently ignores invalid filters
+
+**Behavior:**
+
+- Filters are validated against the entity's fields and the allowed fields list
+- Invalid operators or field types return HTTP 400 with a descriptive error message
+- Only fields listed in `fields` are accepted when filtering
+- The `FasterFilters<T>` wrapper provides both the raw filter map and the validated `Specification<T>`
+
+**Example usage:**
+
+```bash
+# Valid filter (field is in allowed list)
+GET /custom-produtos?nome=Notebook
+
+# Invalid field (not in allowed list) - returns 400
+GET /custom-produtos?descricao=Dell
+# Response: Campo 'descricao' não é permitido para filtro. Campos permitidos: [nome, preco]
+
+# Invalid operator - returns 400
+GET /custom-produtos?nome__invalid=valor
+# Response: Operador 'invalid' não suportado. Operadores válidos: eq, like, gt, lt, gte, lte
+
+# Type mismatch - returns 400
+GET /custom-produtos?preco__like=5000
+# Response: Operador 'like' só pode ser usado em campos do tipo String
+```
+
 ### Field Protection
 
 Use Jackson annotations to control field exposure:

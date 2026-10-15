@@ -1,8 +1,8 @@
-# FasterCRUD
+# FasterAPI
 
 Automate REST endpoints for JPA entities with an annotation.
 
-FasterCRUD is a minimalist Spring Boot framework that automatically generates RESTful CRUD endpoints for JPA entities through a simple annotation. Eliminate the need to write repetitive Controllers, Services, and Repositories.
+FasterAPI is a minimalist Spring Boot framework that automatically generates RESTful CRUD endpoints for JPA entities through a simple annotation. Eliminate the need to write repetitive Controllers, Services, and Repositories.
 
 ---
 

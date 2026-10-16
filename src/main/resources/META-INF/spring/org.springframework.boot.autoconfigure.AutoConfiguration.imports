@@ -1,2 +1,3 @@
 com.rokaidev.fasterapi.autoconfigure.FasterApiAutoConfiguration
+com.rokaidev.fasterapi.autoconfigure.FasterFilterAutoConfiguration
 com.rokaidev.fasterapi.openapi.FasterApiOpenApiAutoConfiguration

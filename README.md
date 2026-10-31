@@ -20,7 +20,7 @@ Add the version published to Maven Central to your project's `pom.xml`:
 <dependency>
     <groupId>io.github.rokaideveloper</groupId>
     <artifactId>fasterapi-spring-boot-starter</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.5</version>
 </dependency>
 ```
 
@@ -623,11 +623,11 @@ public class ProdutoDTO {
 
 ## Dependencies and Java Compatibility
 
-Artifact `1.0.2` is compiled with `--release 17`. Therefore, the consuming application must run on Java 17 or higher. Spring Boot 3.2 also requires Java 17 or higher.
+Artifact `1.0.5` is compiled with `--release 17`. Therefore, the consuming application must run on Java 17 or higher. Spring Boot 3.2 also requires Java 17 or higher.
 
 In practical terms:
 
-| Application runtime | FasterAPI 1.0.2 |
+| Application runtime | FasterAPI 1.0.5 |
 |---------------------|-----------------|
 | Java 17             | Supported       |
 | Java 18, 19, or 20  | Supported       |
@@ -885,7 +885,7 @@ Adicione a versão publicada no Maven Central ao `pom.xml` do seu projeto:
 <dependency>
     <groupId>io.github.rokaideveloper</groupId>
     <artifactId>fasterapi-spring-boot-starter</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.5</version>
 </dependency>
 ```
 
@@ -1390,11 +1390,11 @@ public class ProdutoDTO {
 
 ## Dependências e compatibilidade Java
 
-O artefato `1.0.2` é compilado com `--release 17`. Portanto, a aplicação consumidora precisa executar em Java 17 ou superior. O Spring Boot 3.2 também exige Java 17 ou superior.
+O artefato `1.0.5` é compilado com `--release 17`. Portanto, a aplicação consumidora precisa executar em Java 17 ou superior. O Spring Boot 3.2 também exige Java 17 ou superior.
 
 Em termos práticos:
 
-| Runtime da aplicação | FasterAPI 1.0.2 |
+| Runtime da aplicação | FasterAPI 1.0.5 |
 |----------------------|-----------------|
 | Java 17               | Suportado       |
 | Java 18, 19 ou 20     | Suportado       |

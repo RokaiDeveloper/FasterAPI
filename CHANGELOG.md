@@ -7,6 +7,18 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 **Português (Brasil):** [Ver versão em português](#português-brasil)
 
+## [1.0.6] - 2026-10-31
+
+### Fixed
+
+- Fixed application startup failure caused by unused `ObjectMapper` and `EntityManager` constructor dependencies in `DtoMapper` (#22).
+- Decoupled `DtoMapper` constructor so Spring contexts no longer require an `ObjectMapper` bean for FasterAPI to initialize.
+
+### Tests
+
+- Added regression tests using `ApplicationContextRunner` ensuring `DtoMapper` loads without an `ObjectMapper` bean in the Spring context.
+- Added full unit test coverage for `toEntity()`, `toDto()`, `updateEntity()`, and `@JsonIgnore` filtered mappings.
+
 ## [1.0.5] - 2026-10-16
 
 ### Fixed
@@ -107,6 +119,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - Added Spring Boot auto-configuration for the starter.
 - Added automatic and manual DTO support, pagination, sorting, filters, PATCH, `@ReadOnly`, `@EntityMapping`, and `@JsonIgnore` handling.
 
+[1.0.6]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.6
 [1.0.5]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.5
 [1.0.4]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.4
 [1.0.3]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.3
@@ -124,6 +137,18 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 e o projeto segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 **English:** [View the English version](#changelog)
+
+## [1.0.6] - 2026-10-31
+
+### Corrigido
+
+- Corrigida a falha de inicialização da aplicação causada por dependências não utilizadas de `ObjectMapper` e `EntityManager` no construtor de `DtoMapper` (#22).
+- Desacoplado o construtor do `DtoMapper` para que o contexto Spring não exija um bean de `ObjectMapper` para inicializar o FasterAPI.
+
+### Testes
+
+- Adicionados testes de regressão com `ApplicationContextRunner` garantindo o carregamento do `DtoMapper` sem a presença do bean `ObjectMapper` no contexto Spring.
+- Adicionada cobertura completa de testes unitários para `toEntity()`, `toDto()`, `updateEntity()` e filtragem respeitando `@JsonIgnore`.
 
 ## [1.0.5] - 2026-10-16
 

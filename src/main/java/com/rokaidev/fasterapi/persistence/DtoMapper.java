@@ -1,9 +1,6 @@
 package com.rokaidev.fasterapi.persistence;
 
-import com.rokaidev.fasterapi.annotation.ReadOnly;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
@@ -17,12 +14,7 @@ import java.util.Map;
 @Component
 public class DtoMapper {
 
-    private final ObjectMapper objectMapper;
-    private final EntityManager entityManager;
-
-    public DtoMapper(ObjectMapper objectMapper, EntityManager entityManager) {
-        this.objectMapper = objectMapper;
-        this.entityManager = entityManager;
+    public DtoMapper() {
     }
 
     /**

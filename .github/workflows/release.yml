@@ -32,7 +32,7 @@ jobs:
           fetch-depth: 0
 
       - name: Configure Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "17"
@@ -123,7 +123,7 @@ jobs:
           fetch-depth: 0
 
       - name: Configure Java and Maven Central credentials
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "17"

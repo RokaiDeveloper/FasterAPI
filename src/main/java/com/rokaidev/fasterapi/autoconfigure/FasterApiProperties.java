@@ -1,10 +1,10 @@
 package com.rokaidev.fasterapi.autoconfigure;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "fasterapi")
 public class FasterApiProperties {

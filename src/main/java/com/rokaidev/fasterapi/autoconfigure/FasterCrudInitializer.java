@@ -1,16 +1,16 @@
 package com.rokaidev.fasterapi.autoconfigure;
 
-import com.rokaidev.fasterapi.annotation.EntityMapping;
-import com.rokaidev.fasterapi.annotation.FasterCRUD;
-import com.rokaidev.fasterapi.persistence.CrudOperation;
-import com.rokaidev.fasterapi.persistence.CrudRegistration;
-import com.rokaidev.fasterapi.persistence.CrudRegistrationRegistry;
-import com.rokaidev.fasterapi.persistence.DtoMapper;
-import com.rokaidev.fasterapi.persistence.GenericCrudService;
-import com.rokaidev.fasterapi.web.GenericCrudController;
+import java.lang.reflect.Method;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.Entity;
 import jakarta.validation.Validator;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,13 +29,14 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
-import java.lang.reflect.Method;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import com.rokaidev.fasterapi.annotation.EntityMapping;
+import com.rokaidev.fasterapi.annotation.FasterCRUD;
+import com.rokaidev.fasterapi.persistence.CrudOperation;
+import com.rokaidev.fasterapi.persistence.CrudRegistration;
+import com.rokaidev.fasterapi.persistence.CrudRegistrationRegistry;
+import com.rokaidev.fasterapi.persistence.DtoMapper;
+import com.rokaidev.fasterapi.persistence.GenericCrudService;
+import com.rokaidev.fasterapi.web.GenericCrudController;
 
 @Component
 public class FasterCrudInitializer implements ApplicationRunner {

@@ -1,5 +1,17 @@
 package com.rokaidev.fasterapi.openapi;
 
+import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.time.temporal.Temporal;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.rokaidev.fasterapi.annotation.ReadOnly;
+import com.rokaidev.fasterapi.persistence.CrudOperation;
+import com.rokaidev.fasterapi.persistence.CrudRegistration;
+import com.rokaidev.fasterapi.persistence.CrudRegistrationRegistry;
+
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.Operation;
@@ -25,17 +37,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.rokaidev.fasterapi.annotation.ReadOnly;
-import com.rokaidev.fasterapi.persistence.CrudOperation;
-import com.rokaidev.fasterapi.persistence.CrudRegistration;
-import com.rokaidev.fasterapi.persistence.CrudRegistrationRegistry;
-import java.lang.reflect.Field;
-import java.math.BigDecimal;
-import java.time.temporal.Temporal;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 @Configuration
 @ConditionalOnClass(OpenApiCustomizer.class)

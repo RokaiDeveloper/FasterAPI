@@ -1,7 +1,16 @@
 package com.rokaidev.fasterapi.persistence;
 
-import com.rokaidev.fasterapi.annotation.ReadOnly;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rokaidev.fasterapi.annotation.ReadOnly;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -9,20 +18,12 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
-
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.Locale;
-import java.util.stream.Collectors;
 
 public class GenericCrudService<T> {
 
@@ -76,18 +77,18 @@ public class GenericCrudService<T> {
         if (useDto) {
             return entities.stream()
                     .map(e -> dtoMapper.toDto(e, (Class<Object>) dtoClass))
-                    .collect(java.util.stream.Collectors.toList());
+                    .collect(Collectors.toList());
         } else {
             // Opção 1: DTO automático - filtra campos com @JsonIgnore
             return entities.stream()
                     .map(dtoMapper::toFilteredDto)
-                    .collect(java.util.stream.Collectors.toList());
+                    .collect(Collectors.toList());
         }
     }
 
     @SuppressWarnings("unchecked")
-    public org.springframework.data.domain.Page<?> findAll(org.springframework.data.domain.Pageable pageable) {
-        org.springframework.data.domain.Page<T> entityPage = repository.findAll(pageable);
+    public Page<?> findAll(Pageable pageable) {
+        Page<T> entityPage = repository.findAll(pageable);
         if (useDto) {
             return entityPage.map(e -> dtoMapper.toDto(e, (Class<Object>) dtoClass));
         } else {
@@ -103,19 +104,19 @@ public class GenericCrudService<T> {
         if (useDto) {
             return entities.stream()
                     .map(e -> dtoMapper.toDto(e, (Class<Object>) dtoClass))
-                    .collect(java.util.stream.Collectors.toList());
+                    .collect(Collectors.toList());
         } else {
             // Opção 1: DTO automático - filtra campos com @JsonIgnore
             return entities.stream()
                     .map(dtoMapper::toFilteredDto)
-                    .collect(java.util.stream.Collectors.toList());
+                    .collect(Collectors.toList());
         }
     }
 
     @SuppressWarnings("unchecked")
-    public org.springframework.data.domain.Page<?> findAll(Map<String, String> filters, org.springframework.data.domain.Pageable pageable) {
+    public Page<?> findAll(Map<String, String> filters, Pageable pageable) {
         Specification<T> spec = buildSpecification(filters);
-        org.springframework.data.domain.Page<T> entityPage = repository.findAll(spec, pageable);
+        Page<T> entityPage = repository.findAll(spec, pageable);
         if (useDto) {
             return entityPage.map(e -> dtoMapper.toDto(e, (Class<Object>) dtoClass));
         } else {

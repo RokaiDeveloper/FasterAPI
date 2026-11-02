@@ -1,15 +1,18 @@
 package com.rokaidev.fasterapi.web;
 
-import com.rokaidev.fasterapi.persistence.GenericCrudService;
-import com.rokaidev.fasterapi.persistence.EntityNotFoundException;
-import com.rokaidev.fasterapi.persistence.ValidationException;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
+import com.rokaidev.fasterapi.persistence.GenericCrudService;
+import com.rokaidev.fasterapi.persistence.EntityNotFoundException;
+import com.rokaidev.fasterapi.persistence.ValidationException;
 
 
 public class GenericCrudController<T> {
@@ -48,13 +51,13 @@ public class GenericCrudController<T> {
             throw new UnsupportedOperationException("Endpoint GET is disabled");
         }
         // Remove pagination params from filters
-        Map<String, String> filters = new java.util.HashMap<>(allParams);
+        Map<String, String> filters = new HashMap<>(allParams);
         filters.remove("page");
         filters.remove("size");
         filters.remove("sort");
         
         if (page != null || size != null || sort != null) {
-            org.springframework.data.domain.Pageable pageable = buildPageable(page, size, sort);
+            Pageable pageable = buildPageable(page, size, sort);
             if (!filters.isEmpty()) {
                 return service.findAll(filters, pageable);
             }
@@ -68,21 +71,21 @@ public class GenericCrudController<T> {
         return service.findAll();
     }
 
-    private org.springframework.data.domain.Pageable buildPageable(Integer page, Integer size, String sort) {
+    private Pageable buildPageable(Integer page, Integer size, String sort) {
         int pageNum = page != null ? page : 0;
         int pageSize = size != null ? size : 10;
         
         if (sort != null && !sort.isEmpty()) {
             String[] sortParams = sort.split(",");
-            org.springframework.data.domain.Sort.Direction direction = 
+            Sort.Direction direction = 
                 sortParams.length > 1 && sortParams[1].equalsIgnoreCase("desc") 
-                ? org.springframework.data.domain.Sort.Direction.DESC 
-                : org.springframework.data.domain.Sort.Direction.ASC;
-            return org.springframework.data.domain.PageRequest.of(pageNum, pageSize, 
-                org.springframework.data.domain.Sort.by(direction, sortParams[0]));
+                ? Sort.Direction.DESC 
+                : Sort.Direction.ASC;
+            return PageRequest.of(pageNum, pageSize, 
+                Sort.by(direction, sortParams[0]));
         }
         
-        return org.springframework.data.domain.PageRequest.of(pageNum, pageSize);
+        return PageRequest.of(pageNum, pageSize);
     }
 
     @GetMapping("/{id}")

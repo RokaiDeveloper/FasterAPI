@@ -6,7 +6,7 @@
 
     <groupId>io.github.rokaideveloper</groupId>
     <artifactId>fasterapi-spring-boot-starter</artifactId>
-    <version>1.0.7</version>
+    <version>1.0.6</version>
     <packaging>jar</packaging>
 
     <name>FasterAPI Spring Boot Starter</name>
@@ -100,7 +100,6 @@
             <version>${spring-boot.version}</version>
             <optional>true</optional>
         </dependency>
-        <!-- mockito-inline removido: mockito 5 (gerenciado pelo SB 4.x) já inclui inline mocking por padrão -->
     </dependencies>
 
     <build>

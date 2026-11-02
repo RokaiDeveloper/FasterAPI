@@ -1,14 +1,11 @@
 package com.rokaidev.fasterapi.core;
 
-import com.rokaidev.fasterapi.persistence.GenericCrudService;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 

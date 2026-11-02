@@ -1,13 +1,15 @@
 package com.rokaidev.fasterapi.web;
 
-import com.rokaidev.fasterapi.persistence.CrudRegistration;
-import com.rokaidev.fasterapi.persistence.CrudRegistrationRegistry;
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.HttpRequestMethodNotSupportedException;
+
+import com.rokaidev.fasterapi.persistence.CrudRegistration;
+import com.rokaidev.fasterapi.persistence.CrudRegistrationRegistry;
 
 @ControllerAdvice
 public class CrudDisabledOperationHandler {

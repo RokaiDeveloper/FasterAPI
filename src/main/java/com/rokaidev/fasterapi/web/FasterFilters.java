@@ -1,8 +1,8 @@
 package com.rokaidev.fasterapi.web;
 
-import org.springframework.data.jpa.domain.Specification;
-
 import java.util.Map;
+
+import org.springframework.data.jpa.domain.Specification;
 
 public class FasterFilters<T> {
     private final Map<String, String> filters;

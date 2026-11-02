@@ -20,7 +20,7 @@ Add the version published to Maven Central to your project's `pom.xml`:
 <dependency>
     <groupId>io.github.rokaideveloper</groupId>
     <artifactId>fasterapi-spring-boot-starter</artifactId>
-    <version>1.0.5</version>
+    <version>1.0.7</version>
 </dependency>
 ```
 
@@ -623,24 +623,24 @@ public class ProdutoDTO {
 
 ## Dependencies and Java Compatibility
 
-Artifact `1.0.5` is compiled with `--release 17`. Therefore, the consuming application must run on Java 17 or higher. Spring Boot 3.2 also requires Java 17 or higher.
+FasterAPI **1.0.6 is the final release compatible with Spring Boot 3.x**.
 
-In practical terms:
+Starting with FasterAPI **1.0.7**, the framework targets Spring Boot 4.x exclusively. FasterAPI 1.0.7 and later do not support Spring Boot 3.x.
 
-| Application runtime | FasterAPI 1.0.5 |
-|---------------------|-----------------|
-| Java 17             | Supported       |
-| Java 18, 19, or 20  | Supported       |
-| Java 21             | Supported       |
-| Java 22+            | Supported, provided it is compatible with the Spring Boot version used |
+| FasterAPI version | Spring Boot compatibility |
+|-------------------|---------------------------|
+| 1.0.6 and earlier | Spring Boot 3.x |
+| 1.0.7 and later   | Spring Boot 4.x |
 
-The starter is intended for Spring Boot 3.x applications with Java 17 or higher and integrates Spring MVC Servlet, Spring Data JPA, Jakarta Persistence, Jakarta Bean Validation, and Jackson.
+FasterAPI requires Java 17 or higher. The consuming application must use a Java version supported by its Spring Boot version.
 
-The consumer must provide the database driver and configuration. The starter does not include a production database and does not impose H2 on the application.
+The starter integrates with Spring MVC Servlet, Spring Data JPA, Jakarta Persistence, Jakarta Bean Validation, and Jackson.
 
-SpringDoc is optional. To enable the documentation, add the dependency described in the [OpenAPI/Swagger Documentation](#openapiswagger-documentation) section.
+The consuming application must provide its database driver and configuration. The starter does not include a production database or impose H2 on the application.
 
-FasterAPI does not use MapStruct or Spring Data Envers. Auditing, authentication, authorization, and business rules remain the application's responsibilities.
+SpringDoc is optional. To enable API documentation, add the dependency described in the [OpenAPI/Swagger Documentation](#openapiswagger-documentation) section.
+
+FasterAPI does not use MapStruct or Spring Data Envers. Auditing, authentication, authorization, and business rules remain the application's responsibility.
 
 ## Project Tests
 
@@ -885,7 +885,7 @@ Adicione a versão publicada no Maven Central ao `pom.xml` do seu projeto:
 <dependency>
     <groupId>io.github.rokaideveloper</groupId>
     <artifactId>fasterapi-spring-boot-starter</artifactId>
-    <version>1.0.5</version>
+    <version>1.0.7</version>
 </dependency>
 ```
 
@@ -1390,24 +1390,24 @@ public class ProdutoDTO {
 
 ## Dependências e compatibilidade Java
 
-O artefato `1.0.5` é compilado com `--release 17`. Portanto, a aplicação consumidora precisa executar em Java 17 ou superior. O Spring Boot 3.2 também exige Java 17 ou superior.
+A FasterAPI **1.0.6 é a última versão compatível com Spring Boot 3.x**.
 
-Em termos práticos:
+A partir da FasterAPI **1.0.7**, o framework terá como alvo exclusivamente o Spring Boot 4.x. A FasterAPI 1.0.7 e versões posteriores não oferecem suporte ao Spring Boot 3.x.
 
-| Runtime da aplicação | FasterAPI 1.0.5 |
-|----------------------|-----------------|
-| Java 17               | Suportado       |
-| Java 18, 19 ou 20     | Suportado       |
-| Java 21               | Suportado       |
-| Java 22+              | Suportado, desde que compatível com o Spring Boot usado |
+| Versão da FasterAPI | Compatibilidade com Spring Boot |
+|---------------------|---------------------------------|
+| 1.0.6 e anteriores  | Spring Boot 3.x |
+| 1.0.7 e posteriores | Spring Boot 4.x |
 
-O starter é destinado a aplicações Spring Boot 3.x com Java 17 ou superior e integra Spring MVC Servlet, Spring Data JPA, Jakarta Persistence, Jakarta Bean Validation e Jackson.
+A FasterAPI exige Java 17 ou superior. A aplicação consumidora deve usar uma versão do Java compatível com a versão do Spring Boot utilizada.
 
-O consumidor precisa fornecer o driver e a configuração do banco de dados. O starter não inclui banco de dados de produção e não impõe H2 à aplicação.
+O starter integra-se com Spring MVC Servlet, Spring Data JPA, Jakarta Persistence, Jakarta Bean Validation e Jackson.
 
-SpringDoc é opcional. Para habilitar a documentação, adicione a dependência descrita na seção [Documentação OpenAPI/Swagger](#documentação-openapiswagger).
+A aplicação consumidora deve fornecer o driver e a configuração do banco de dados. O starter não inclui um banco de dados de produção nem impõe o uso de H2.
 
-O FasterAPI não usa MapStruct nem Spring Data Envers. Auditoria, autenticação, autorização e regras de negócio continuam sendo responsabilidades da aplicação.
+SpringDoc é opcional. Para habilitar a documentação da API, adicione a dependência descrita na seção [Documentação OpenAPI/Swagger](#documentação-openapiswagger).
+
+A FasterAPI não usa MapStruct nem Spring Data Envers. Auditoria, autenticação, autorização e regras de negócio continuam sendo responsabilidades da aplicação.
 
 ## Testes do projeto
 

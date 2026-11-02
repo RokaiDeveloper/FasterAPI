@@ -7,6 +7,17 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 **Português (Brasil):** [Ver versão em português](#português-brasil)
 
+## [1.0.7] - 2026-11-02
+
+### Changed
+
+- Changed the Spring Boot compatibility baseline to Spring Boot 4.x.
+- Established version 1.0.6 as the final release compatible with Spring Boot 3.x.
+
+### Documentation
+
+- Updated the README to clarify Spring Boot compatibility by FasterAPI version.
+
 ## [1.0.6] - 2026-10-31
 
 ### Fixed
@@ -119,6 +130,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - Added Spring Boot auto-configuration for the starter.
 - Added automatic and manual DTO support, pagination, sorting, filters, PATCH, `@ReadOnly`, `@EntityMapping`, and `@JsonIgnore` handling.
 
+[1.0.7]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.7
 [1.0.6]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.6
 [1.0.5]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.5
 [1.0.4]: https://github.com/RokaiDeveloper/FasterAPI/releases/tag/v1.0.4
@@ -137,6 +149,17 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 e o projeto segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 **English:** [View the English version](#changelog)
+
+## [1.0.7] - 2026-11-02
+
+### Alterado
+
+- Alterada a linha de compatibilidade do Spring Boot para Spring Boot 4.x.
+- Definida a versão 1.0.6 como a última release compatível com Spring Boot 3.x.
+
+### Documentação
+
+- Atualizado o README para esclarecer a compatibilidade com Spring Boot por versão do FasterAPI.
 
 ## [1.0.6] - 2026-10-31
 

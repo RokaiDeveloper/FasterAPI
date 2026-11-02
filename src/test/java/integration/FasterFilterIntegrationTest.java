@@ -1,9 +1,7 @@
 package integration;
 
 import com.rokaidev.fasterapi.annotation.FasterFilter;
-import com.rokaidev.fasterapi.autoconfigure.FasterCrudInitializer;
 import com.rokaidev.fasterapi.autoconfigure.FasterFilterAutoConfiguration;
-import com.rokaidev.fasterapi.persistence.FilterValidationException;
 import com.rokaidev.fasterapi.web.FasterFilters;
 import com.rokaidev.fasterapi.web.FasterFilterQuery;
 import com.rokaidev.fasterapi.web.FilterExceptionHandler;
@@ -15,9 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
 import org.springframework.data.jpa.repository.support.JpaEntityInformationSupport;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
@@ -27,12 +24,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
-import java.util.Map;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;

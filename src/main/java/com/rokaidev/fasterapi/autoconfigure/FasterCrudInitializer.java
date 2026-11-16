@@ -15,9 +15,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.event.EventListener;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
@@ -39,7 +39,7 @@ import com.rokaidev.fasterapi.persistence.GenericCrudService;
 import com.rokaidev.fasterapi.web.GenericCrudController;
 
 @Component
-public class FasterCrudInitializer implements ApplicationRunner {
+public class FasterCrudInitializer {
 
     private static final Logger logger = LoggerFactory.getLogger(FasterCrudInitializer.class);
 
@@ -67,8 +67,8 @@ public class FasterCrudInitializer implements ApplicationRunner {
     @Autowired
     private CrudRegistrationRegistry registrationRegistry;
 
-    @Override
-    public void run(ApplicationArguments args) throws Exception {
+    @EventListener
+    public void onApplicationReady(ApplicationReadyEvent event) {
         List<String> scanPackages = properties.getScanPackages();
         if (scanPackages.isEmpty()) {
             logger.warn(">>> Nenhum pacote FasterAPI configurado; nenhum CRUD será registrado. " +
@@ -236,15 +236,19 @@ public class FasterCrudInitializer implements ApplicationRunner {
         }
     }
 
-    private Set<Class<?>> scanEntities(List<String> basePackages) throws Exception {
+    private Set<Class<?>> scanEntities(List<String> basePackages) {
         ClassPathScanningCandidateComponentProvider scanner =
                 new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AnnotationTypeFilter(FasterCRUD.class));
 
         Set<Class<?>> classes = new LinkedHashSet<>();
         for (String basePackage : basePackages) {
-            for (BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
-                classes.add(Class.forName(bd.getBeanClassName()));
+            try {
+                for (BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
+                    classes.add(Class.forName(bd.getBeanClassName()));
+                }
+            } catch (Exception e) {
+                logger.error(">>> Erro ao escanear pacote {}: {}", basePackage, e.getMessage());
             }
         }
         return classes;

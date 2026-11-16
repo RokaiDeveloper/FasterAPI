@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.event.EventListener;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
@@ -39,6 +40,7 @@ import com.rokaidev.fasterapi.persistence.GenericCrudService;
 import com.rokaidev.fasterapi.web.GenericCrudController;
 
 @Component
+@DependsOn("entityManagerFactory")
 public class FasterCrudInitializer {
 
     private static final Logger logger = LoggerFactory.getLogger(FasterCrudInitializer.class);
